@@ -1,0 +1,2048 @@
+<title>Wedding Venues</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --bg:          #F5F2ED;
+  --surface:     #FFFFFF;
+  --surface-2:   #EDEAE4;
+  --border:      #DDD9D1;
+  --border-2:    #CBC6BC;
+  --text-1:      #1C1A17;
+  --text-2:      #5A5750;
+  --text-3:      #9B978F;
+  --accent:      #5B7A5F;
+  --accent-dim:  #EBF0EC;
+  --accent-mid:  #3D5940;
+  --mauve:       #8474A0;
+  --mauve-dim:   #F0EDF5;
+  --s-new:#8474A0; --s-new-bg:#F0EDF5;
+  --s-responded:#C29054; --s-responded-bg:#FBF3E8;
+  --s-visited:#5B7A5F; --s-visited-bg:#EBF0EC;
+  --s-top:#C25454; --s-top-bg:#FAECEC;
+  --s-declined:#999; --s-declined-bg:#F0EFED;
+  --radius:8px; --sidebar-w:260px; --tab-h:44px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#18170F;--surface:#211F17;--surface-2:#2A2820;--border:#38352A;--border-2:#4A4740;
+  --text-1:#EDE8DF;--text-2:#A09890;--text-3:#6A6660;
+  --accent:#7A9E7E;--accent-dim:#1C2C1E;--accent-mid:#9DBF9F;
+  --mauve:#A898C0;--mauve-dim:#221D30;
+  --s-new:#A898C0;--s-new-bg:#221D30;--s-responded:#D4A870;--s-responded-bg:#2C2210;
+  --s-visited:#7A9E7E;--s-visited-bg:#1C2C1E;--s-top:#D47070;--s-top-bg:#2C1818;
+  --s-declined:#666;--s-declined-bg:#1E1D18;
+  --shadow:0 1px 4px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);
+}}
+:root[data-theme="light"]{
+  --bg:#F5F2ED;--surface:#FFFFFF;--surface-2:#EDEAE4;--border:#DDD9D1;--border-2:#CBC6BC;
+  --text-1:#1C1A17;--text-2:#5A5750;--text-3:#9B978F;
+  --accent:#5B7A5F;--accent-dim:#EBF0EC;--accent-mid:#3D5940;--mauve:#8474A0;--mauve-dim:#F0EDF5;
+  --s-new:#8474A0;--s-new-bg:#F0EDF5;--s-responded:#C29054;--s-responded-bg:#FBF3E8;
+  --s-visited:#5B7A5F;--s-visited-bg:#EBF0EC;--s-top:#C25454;--s-top-bg:#FAECEC;
+  --s-declined:#999;--s-declined-bg:#F0EFED;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+}
+:root[data-theme="dark"]{
+  --bg:#18170F;--surface:#211F17;--surface-2:#2A2820;--border:#38352A;--border-2:#4A4740;
+  --text-1:#EDE8DF;--text-2:#A09890;--text-3:#6A6660;
+  --accent:#7A9E7E;--accent-dim:#1C2C1E;--accent-mid:#9DBF9F;--mauve:#A898C0;--mauve-dim:#221D30;
+  --s-new:#A898C0;--s-new-bg:#221D30;--s-responded:#D4A870;--s-responded-bg:#2C2210;
+  --s-visited:#7A9E7E;--s-visited-bg:#1C2C1E;--s-top:#D47070;--s-top-bg:#2C1818;
+  --s-declined:#666;--s-declined-bg:#1E1D18;
+  --shadow:0 1px 4px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text-1);height:100vh;display:flex;overflow:hidden;font-size:14px;line-height:1.5}
+
+/* Sidebar */
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+#sidebar-header{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.app-title{font-family:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;font-size:1.1rem;font-weight:normal;letter-spacing:.01em;color:var(--text-1);margin-bottom:2px}
+.app-sub{font-size:11px;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+#sidebar-actions{padding:10px 12px;display:flex;gap:6px;border-bottom:1px solid var(--border)}
+#venue-list{flex:1;overflow-y:auto;padding:6px 0}
+.venue-item{padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;border-left:3px solid transparent;transition:background .12s}
+.venue-item:hover{background:var(--surface-2)}
+.venue-item.active{background:var(--accent-dim);border-left-color:var(--accent)}
+.venue-item-name{font-family:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;font-size:.92rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.venue-item-loc{font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.venue-item-meta{display:flex;align-items:center;gap:6px;margin-top:1px;flex-wrap:wrap}
+.venue-item-price{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
+#sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:20px}
+.badge-new{color:var(--s-new);background:var(--s-new-bg)}
+.badge-responded{color:var(--s-responded);background:var(--s-responded-bg)}
+.badge-visited{color:var(--s-visited);background:var(--s-visited-bg)}
+.badge-top{color:var(--s-top);background:var(--s-top-bg)}
+.badge-declined{color:var(--s-declined);background:var(--s-declined-bg)}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;min-height:58px}
+#topbar-title{font-family:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;font-size:1.3rem;font-weight:normal;flex:1;color:var(--text-1)}
+#data-bar{padding:8px 28px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-3)}
+.data-bar-sep{color:var(--border-2)}
+.save-indicator{font-size:11px;color:var(--accent);opacity:0;transition:opacity .3s;margin-left:auto}
+.save-indicator.visible{opacity:1}
+
+/* Tabs */
+#tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px}
+.tab-btn{padding:0 16px;height:var(--tab-h);font-size:13px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .12s}
+.tab-btn:hover{color:var(--text-2)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+#tab-content{flex:1;overflow-y:auto}
+.tab-panel{display:none;padding:28px}
+.tab-panel.active{display:block}
+
+/* Fields */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.field-group{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.field-input{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--radius);padding:7px 10px;font-size:13.5px;color:var(--text-1);font-family:inherit;outline:none;transition:border-color .12s;width:100%}
+.field-input:focus{border-color:var(--accent)}
+select.field-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23999' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.section-title{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* Pros/Cons */
+.proscons-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.proscons-col{display:flex;flex-direction:column;gap:8px}
+.proscons-header{font-size:12px;font-weight:600;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;min-height:32px}
+.tag{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:3px 10px 3px 8px;font-size:12px;color:var(--text-2)}
+.tag-del{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;line-height:1;padding:0}
+.tag-del:hover{color:var(--s-top)}
+.tag-add{background:none;border:1px dashed var(--border-2);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--text-3);cursor:pointer;transition:border-color .12s,color .12s}
+.tag-add:hover{border-color:var(--accent);color:var(--accent)}
+.pro-tag{border-color:color-mix(in srgb,var(--s-visited) 30%,transparent);background:var(--accent-dim);color:var(--accent-mid)}
+.con-tag{border-color:color-mix(in srgb,var(--s-top) 30%,transparent);background:var(--s-top-bg);color:var(--s-top)}
+
+/* ── Pricing (rearchitected) ── */
+.pricing-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.pricing-summary-cell {
+  background: var(--surface);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pricing-summary-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.pricing-summary-amount {
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-1);
+  line-height: 1.1;
+}
+.pricing-summary-cell.total .pricing-summary-amount { color: var(--accent); }
+.pricing-summary-note { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+.guest-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.guest-row label { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.guest-row input { width: 90px; }
+
+/* Pricing sections */
+.pricing-section { margin-bottom: 28px; }
+.pricing-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.pricing-section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  flex: 1;
+}
+.pricing-section-subtotal {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.optional-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  background: var(--mauve-dim);
+  color: var(--mauve);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.optional-note {
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-style: italic;
+  margin-bottom: 12px;
+  padding: 7px 10px;
+  background: var(--mauve-dim);
+  border-radius: 6px;
+  border-left: 3px solid var(--mauve);
+}
+
+/* Pricing rows */
+.pricing-row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto 32px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pricing-row:last-child { border-bottom: none; }
+.pricing-row.disabled { opacity: .45; }
+.pricing-row-check {
+  width: 16px; height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.pricing-row-label-input {
+  background: none;
+  border: none;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+  padding: 0;
+  outline: none;
+  width: 100%;
+}
+.pricing-row-label-input:focus { color: var(--accent); }
+.pricing-row-amount-wrap { display: flex; align-items: center; gap: 4px; }
+.pricing-row-amount-wrap span { font-size: 12px; color: var(--text-3); }
+.pricing-row-amount {
+  width: 90px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-1);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  outline: none;
+}
+.pricing-row-amount:focus { border-color: var(--accent); }
+.pricing-row-type {
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+.pricing-row-subtotal {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 70px;
+  pointer-events: none;
+  user-select: none;
+}
+.pricing-row-subtotal.excluded {
+  color: var(--text-3);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+.pricing-row-del {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  text-align: center;
+}
+.pricing-row-del:hover { color: var(--s-top); }
+
+/* Package picker */
+.package-picker-wrap {
+  grid-column: 2 / -2;
+  margin: 4px 0 8px;
+}
+.package-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pkg-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-2);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+  text-align: center;
+}
+.pkg-chip:hover { border-color: var(--accent); }
+.pkg-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.pkg-chip-name { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.pkg-chip.selected .pkg-chip-name { color: var(--accent-mid); }
+.pkg-chip-price { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pkg-chip.selected .pkg-chip-price { color: var(--accent); }
+
+.add-row-btn { margin-top: 8px; }
+
+/* Photos */
+.photos-grid{columns:3;column-gap:8px}
+.photos-grid img{width:100%;margin-bottom:8px;border-radius:6px;display:block;cursor:zoom-in;transition:opacity .15s}
+.photos-grid img:hover{opacity:.88}
+.photos-empty{text-align:center;padding:48px 24px;color:var(--text-3)}
+.photos-empty-icon{font-size:2.5rem;margin-bottom:12px}
+.photos-vendors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:10px}
+.vendor-chip{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12.5px}
+.vendor-chip-role{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px}
+.vendor-chip-name{color:var(--text-1);font-weight:500}
+.vendor-chip a{color:var(--accent);text-decoration:none;font-size:11.5px}
+.vendor-chip a:hover{text-decoration:underline}
+@media(max-width:720px){.photos-grid{columns:2}.photos-vendors-grid{grid-template-columns:1fr 1fr}}
+
+/* Documents */
+.doc-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px}
+.doc-icon{font-size:14px;flex-shrink:0}
+.doc-link{flex:1;font-size:13px;color:var(--accent);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-link:hover{text-decoration:underline}
+.doc-del{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;flex-shrink:0}
+.doc-del:hover{color:var(--s-top)}
+
+/* Notes */
+.notes-area{width:100%;min-height:240px;border:1px solid var(--border-2);border-radius:var(--radius);padding:14px;font-size:14px;color:var(--text-1);background:var(--surface);font-family:inherit;line-height:1.7;resize:vertical;outline:none;transition:border-color .12s}
+.notes-area:focus{border-color:var(--accent)}
+.notes-meta{font-size:11.5px;color:var(--text-3);margin-bottom:8px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);border:none;font-size:13px;font-weight:500;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-mid)}
+.btn-ghost{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border)}
+.btn-danger{background:var(--s-top-bg);color:var(--s-top);border:1px solid color-mix(in srgb,var(--s-top) 25%,transparent)}
+.btn-danger:hover{background:var(--s-top);color:#fff}
+.btn-compare{background:var(--mauve-dim);color:var(--mauve);border:1px solid color-mix(in srgb,var(--mauve) 25%,transparent)}
+.btn-compare:hover{background:var(--mauve);color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-icon{padding:6px 8px}
+
+/* Empty */
+#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px}
+.empty-icon{font-size:3rem;opacity:.35}
+.empty-title{font-family:'Palatino Linotype',Palatino,Georgia,serif;font-size:1.3rem;color:var(--text-2);text-align:center}
+.empty-sub{font-size:13px;color:var(--text-3);text-align:center;max-width:280px;line-height:1.7}
+
+/* Compare */
+#compare-view{display:none;flex-direction:column;flex:1;overflow:hidden}
+#compare-view.active{display:flex}
+#compare-header{padding:16px 24px;background:var(--mauve-dim);border-bottom:1px solid color-mix(in srgb,var(--mauve) 20%,transparent);display:flex;align-items:center;gap:12px}
+#compare-header h2{font-family:'Palatino Linotype',Palatino,Georgia,serif;font-size:1rem;font-weight:normal;color:var(--mauve);flex:1}
+#compare-body{flex:1;overflow:auto;padding:24px}
+.compare-table{border-collapse:collapse;width:100%;min-width:600px}
+.compare-table th{padding:14px 16px;text-align:left;vertical-align:top;border-bottom:2px solid var(--border);font-family:'Palatino Linotype',Palatino,Georgia,serif;font-size:.95rem;font-weight:normal;color:var(--text-1);min-width:160px}
+.compare-table th.row-label{font-family:inherit;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);background:var(--surface);position:sticky;left:0;z-index:1;border-right:1px solid var(--border);min-width:130px}
+.compare-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text-2);vertical-align:top}
+.compare-table td.row-label{font-family:inherit;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);background:var(--surface);position:sticky;left:0;z-index:1;border-right:1px solid var(--border)}
+.compare-table tr:hover td{background:var(--surface-2)}
+.compare-table tr:hover td.row-label{background:var(--surface-2)}
+.compare-best{color:var(--accent);font-weight:600}
+
+/* Modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;padding:28px;width:min(520px,94vw);box-shadow:var(--shadow),0 16px 48px rgba(0,0,0,.15);display:flex;flex-direction:column;gap:18px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Palatino Linotype',Palatino,Georgia,serif;font-size:1.2rem;font-weight:normal;color:var(--text-1)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-grid .full{grid-column:1/-1}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end}
+.tag-modal{width:min(320px,90vw)}
+.tag-input{width:100%}
+#theme-toggle{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px;color:var(--text-2)}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+@media(max-width:720px){
+  /* Stack sidebar above main */
+  body{flex-direction:column}
+  #sidebar{width:100%;min-width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:100vh}
+  #main{width:100%;flex:1}
+
+  /* Mobile nav: show list OR detail, never both */
+  body:not(.mobile-detail) #main{display:none}
+  body.mobile-detail #sidebar{display:none}
+
+  /* Back button */
+  #back-btn{display:inline-flex!important}
+
+  /* Sidebar */
+  #sidebar-header{padding:14px 16px 10px}
+  #sidebar-actions{padding:8px 12px}
+  #venue-list{max-height:calc(100vh - 130px);overflow-y:auto}
+  .venue-item{padding:13px 16px;-webkit-tap-highlight-color:transparent}
+  .venue-item-name{font-size:.98rem}
+
+  /* Topbar */
+  #topbar{padding:10px 14px;min-height:50px;gap:8px}
+  #topbar-title{font-size:1.05rem}
+
+  /* Data bar */
+  #data-bar{padding:6px 14px;flex-wrap:wrap;row-gap:2px}
+
+  /* Tab bar */
+  #tab-bar{padding:0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #tab-bar::-webkit-scrollbar{display:none}
+  .tab-btn{padding:0 10px;white-space:nowrap;font-size:12.5px}
+
+  /* Tab panels */
+  .tab-panel{padding:18px 16px}
+
+  /* Grids → single column */
+  .field-grid,.proscons-grid,.modal-grid{grid-template-columns:1fr}
+
+  /* Pricing */
+  .pricing-summary{grid-template-columns:1fr}
+  .pricing-summary-cell{padding:10px 14px}
+  .pricing-summary-amount{font-size:1.25rem}
+  .pricing-row{grid-template-columns:20px 1fr auto 32px}
+  .guest-row{flex-wrap:wrap}
+  .guest-row input{width:80px}
+
+  /* Buttons */
+  .btn{padding:7px 12px;font-size:13px}
+  .btn-sm{padding:5px 10px}
+
+  /* Compare */
+  #compare-body{padding:14px}
+  #compare-header{padding:12px 16px}
+}
+</style>
+
+<!-- Add Venue Modal -->
+<div class="modal-backdrop" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Add a Venue</div>
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+      <div class="field-label">Paste a website URL to auto-fill</div>
+      <div style="display:flex;gap:8px">
+        <input class="field-input" id="m-url-fetch" placeholder="https://venuename.com" style="flex:1">
+        <button class="btn btn-primary" id="fetch-btn" onclick="fetchVenueUrl()">Fetch Info</button>
+      </div>
+      <div id="fetch-status" style="font-size:12px;color:var(--text-3);display:none"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;color:var(--text-3);font-size:11.5px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>or fill in manually<div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div class="modal-grid">
+      <div class="field-group full"><div class="field-label">Venue Name</div><input class="field-input" id="m-name" placeholder="e.g. The Meadow House"></div>
+      <div class="field-group"><div class="field-label">City / Location</div><input class="field-input" id="m-location" placeholder="e.g. Hudson, NY"></div>
+      <div class="field-group"><div class="field-label">Status</div>
+        <select class="field-input" id="m-status">
+          <option value="new">Inquired</option><option value="responded">Response Received</option>
+          <option value="visited">Visited</option><option value="top">Top Pick ♥</option><option value="declined">Declined</option>
+        </select>
+      </div>
+      <div class="field-group"><div class="field-label">Capacity</div><input class="field-input" id="m-capacity" type="number" placeholder="e.g. 150"></div>
+      <div class="field-group"><div class="field-label">Contact Name</div><input class="field-input" id="m-contact" placeholder="e.g. Jamie Lee"></div>
+      <div class="field-group"><div class="field-label">Contact Email</div><input class="field-input" id="m-email" type="email" placeholder="e.g. hello@venue.com"></div>
+      <div class="field-group full"><div class="field-label">Website</div><input class="field-input" id="m-website" placeholder="https://..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewVenue()">Add Venue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Modal -->
+<div class="modal-backdrop" id="tag-modal">
+  <div class="modal tag-modal">
+    <div class="modal-title" id="tag-modal-title">Add a Pro</div>
+    <input class="field-input tag-input" id="tag-input" placeholder="Type and press Enter…">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeTagModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTag()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Document Modal -->
+<div class="modal-backdrop" id="doc-modal">
+  <div class="modal tag-modal">
+    <div class="modal-title">Add Document Link</div>
+    <div class="field-group" style="margin-bottom:10px">
+      <div class="field-label">Document name</div>
+      <input class="field-input" id="doc-name-input" placeholder="e.g. 2026 Package Brochure.pdf">
+    </div>
+    <div class="field-group">
+      <div class="field-label">URL (Gmail link, PDF link, website, etc.)</div>
+      <input class="field-input" id="doc-url-input" placeholder="https://…" type="url">
+    </div>
+    <div class="modal-footer" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeAddDocModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDoc()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Layout -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <div class="app-title">Venue Tracker</div>
+    <div class="app-sub">Wedding Planning</div>
+  </div>
+  <div id="sidebar-actions">
+    <button class="btn btn-primary btn-sm" style="flex:1" onclick="openAddModal()">+ Add Venue</button>
+    <button class="btn btn-compare btn-sm" onclick="toggleCompare()">Compare</button>
+  </div>
+  <div id="venue-list"></div>
+  <div id="sidebar-footer">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
+    <button class="btn btn-ghost btn-sm" onclick="importData()">↑ Import</button>
+    <button id="theme-toggle" onclick="toggleTheme()">◐</button>
+  </div>
+  <div id="mobile-compare-footer" style="display:none;padding:10px 12px;border-top:1px solid var(--border)">
+    <button class="btn btn-compare" style="width:100%" id="mobile-view-compare-btn" onclick="showView('compare');renderCompare()">View Comparison →</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="empty-state">
+    <div class="empty-icon">🏛</div>
+    <div class="empty-title">No venues yet</div>
+    <div class="empty-sub">Add your first venue to start tracking inquiries, pricing, and notes.</div>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Your First Venue</button>
+  </div>
+
+  <div id="detail-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div id="topbar">
+      <button class="btn btn-ghost btn-sm" id="back-btn" style="display:none;flex-shrink:0" onclick="mobileBack()">← Venues</button>
+      <div id="topbar-title">—</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="topbar-badge" class="badge"></span>
+        <select class="field-input" id="status-select" style="width:auto;font-size:12px;padding:5px 28px 5px 8px" onchange="onStatusChange()">
+          <option value="new">Inquired</option><option value="responded">Response Received</option>
+          <option value="visited">Visited</option><option value="top">Top Pick ♥</option><option value="declined">Declined</option>
+        </select>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteVenue()">Delete</button>
+    </div>
+    <div id="data-bar">
+      <span id="db-location"></span>
+      <span class="data-bar-sep" id="db-sep1">·</span>
+      <span id="db-capacity"></span>
+      <span class="data-bar-sep" id="db-sep2">·</span>
+      <span id="db-contact"></span>
+      <span class="save-indicator" id="save-indicator">Saved</span>
+    </div>
+    <div id="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tab-btn" onclick="switchTab('pricing',this)">Pricing</button>
+      <button class="tab-btn" onclick="switchTab('photos',this)">Photos</button>
+      <button class="tab-btn" onclick="switchTab('notes',this)">Notes</button>
+    </div>
+    <div id="tab-content">
+      <!-- Overview -->
+      <div class="tab-panel active" id="tab-overview">
+        <div class="field-grid">
+          <div class="field-group"><div class="field-label">Venue Name</div><input class="field-input" id="f-name" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Location</div><input class="field-input" id="f-location" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Guest Capacity</div><input class="field-input" id="f-capacity" type="number" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Style / Type</div><input class="field-input" id="f-style" placeholder="e.g. Barn, Garden, Ballroom" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Contact Name</div><input class="field-input" id="f-contact" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Contact Email</div><input class="field-input" id="f-email" type="email" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Website</div><input class="field-input" id="f-website" type="url" oninput="autoSave()"></div>
+          <div class="field-group"><div class="field-label">Inquiry Sent</div><input class="field-input" id="f-date-inquired" type="date" oninput="autoSave()"></div>
+        </div>
+        <div class="section-title">Pros & Cons</div>
+        <div class="proscons-grid">
+          <div class="proscons-col">
+            <div class="proscons-header"><span style="color:var(--accent)">✓</span> Pros</div>
+            <div class="tag-list" id="pros-list"></div>
+            <div><button class="tag-add" onclick="openTagModal('pro')">+ Add pro</button></div>
+          </div>
+          <div class="proscons-col">
+            <div class="proscons-header"><span style="color:var(--s-top)">✕</span> Cons</div>
+            <div class="tag-list" id="cons-list"></div>
+            <div><button class="tag-add" onclick="openTagModal('con')">+ Add con</button></div>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:8px">Documents</div>
+        <div id="docs-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+        <button class="tag-add" onclick="openAddDocModal()">+ Add document link</button>
+      </div>
+
+      <!-- Photos -->
+      <div class="tab-panel" id="tab-photos">
+        <div id="photos-credit-bar" style="margin-bottom:16px;font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap"></div>
+        <div id="photos-grid" class="photos-grid"></div>
+        <div id="photos-vendors" style="margin-top:24px"></div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="tab-panel" id="tab-pricing">
+        <!-- summary injected by JS -->
+        <div id="pricing-summary-wrap"></div>
+        <div class="guest-row">
+          <label class="field-label">Guest Count</label>
+          <input type="number" class="field-input" id="p-guests" value="100" oninput="recalc()">
+        </div>
+        <div id="pricing-sections"></div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+          <div class="field-label" style="margin-bottom:10px">Add a budget category</div>
+          <div id="category-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="tab-panel" id="tab-notes">
+        <div class="notes-meta" id="notes-meta"></div>
+        <textarea class="notes-area" id="f-notes" placeholder="Jot down anything — impressions from the visit, questions to follow up on, things the coordinator mentioned…" oninput="autoSave()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compare -->
+  <div id="compare-view">
+    <div id="compare-header">
+      <button class="btn btn-ghost btn-sm" id="compare-back-btn" style="display:none;flex-shrink:0" onclick="mobileCompareBack()">← Select</button>
+      <h2>Compare Venues</h2>
+      <button class="btn btn-ghost btn-sm" onclick="toggleCompare()">✕ Exit</button>
+    </div>
+    <div id="compare-body">
+      <div id="compare-placeholder" style="text-align:center;padding:60px;color:var(--text-3);font-size:14px">Select 2 or more venues in the sidebar to compare side by side.</div>
+      <div style="overflow-x:auto"><table class="compare-table" id="compare-table" style="display:none"></table></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="onImportFile(event)">
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const STATUS_LABELS = {new:'Inquired',responded:'Response Received',visited:'Visited',top:'Top Pick ♥',declined:'Declined'};
+const STATUS_CLASS  = {new:'badge-new',responded:'badge-responded',visited:'badge-visited',top:'badge-top',declined:'badge-declined'};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let venues = [], activeId = null, compareMode = false, compareSelected = new Set();
+let saveTimer = null, currentTagType = null;
+
+// ── Seed ───────────────────────────────────────────────────────────────────
+const SEED_VENUES = [{
+  id: 'v_kualoa_paliku',
+  name: 'Paliku Gardens at Kualoa Ranch',
+  location: "Kaneohe, O'ahu, Hawaii",
+  status: 'responded', capacity: '250', style: 'Outdoor Garden / Ranch',
+  contact: 'Denise Perez', email: 'weddings@kualoa.com',
+  website: 'https://kualoa-ranch.sendsites.net/L/Wedding/F/480965384/P/DenisePerez4129',
+  dateInquired: '2026-07-10',
+  docs: [
+    { name: '2025 Dinner Catering Menu.pdf', url: 'https://api2.purlhub.com/library/cdn/kualoa-ranch.hospitality.thirdsocial/documents/2025%20Dinner%20Catering%20Menu.pdf?_vz=2' },
+    { name: 'Kualoa Ranch Wedding Venue Page', url: 'https://kualoa-ranch.sendsites.net/L/Wedding/F/480965384/P/DenisePerez4129' },
+    { name: '📸 Inspiration gallery + vendor credits (Mersadi Olson)', url: 'https://mersadiolson.com/2025/05/27/timeless-wedding-at-paliku-gardens-of-kualoa-ranch-on-oahu/' },
+  ],
+  photos: {
+    credit: { name: 'Mersadi Olson Photography', url: 'https://mersadiolson.com' },
+    sourceUrl: 'https://mersadiolson.com/2025/05/27/timeless-wedding-at-paliku-gardens-of-kualoa-ranch-on-oahu/',
+    images: [
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/14_hawaii-wedding-ceremony-space-paliku-ranch-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/19_hawaii-wedding-foggy-day-paliku-gardens-kualoa-ranch-682x1024.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/21_bride-walks-into-ceremony-paliku-gardens-kualoa-ranch-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/24_hawaii-wedding-ceremony-paliku-gardens-kualoa-ranch-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/28_hawaii-wedding-ceremony-space-kualoa-ranch-paliku-gardens-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/17_hawaii-wedding-simple-decor-tropical-wedding-centerpiece-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/18_hawaii-outdoor-wedding-reception-kualoa-ranch-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/38_hawaii-wedding-reception-at-paliku-gardens-of-kualoa-ranch-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/40_hawaii-wedding-outdoor-clear-tent-wedding-kualoa-ranch-682x1024.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/41_hawaii-wedding-reception-paliku-gardens-of-kualoa-ranch-682x1024.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/49_clear-tent-wedding-reception-hawaii-wedding-venue-682x1024.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2025/05/50_hawaii-wedding-reception-paliku-gardens-kualoa-ranch-682x1024.jpg',
+    ],
+    vendors: [
+      { role: 'Photography', name: 'Mersadi Olson', url: 'https://mersadiolson.com' },
+      { role: 'Hair & Makeup', name: 'Reveal Hair and Makeup', url: 'https://revealhm.com' },
+      { role: 'Planning', name: 'Simply Flawless Weddings', url: 'https://simplyflawlessweddings.com' },
+      { role: 'Florals', name: 'Waiahole Nursery', url: 'https://waiaholenursery.com' },
+      { role: 'Bridal Dress', name: 'Isabella Bridal', url: 'https://isabellabridalkingsburg.com' },
+    ],
+  },
+  pros: ["Stunning Ko'olau mountain backdrop","Multiple lawn areas (120–250 guests)","Chairs, tables & bridal suite included","On-site optional catering"],
+  cons: ["Required coordinator from approved list","Alcohol must be client-supplied","$1,000 nonrefundable security deposit","18% service fee + 4.712% HI tax on F&B"],
+  notes: `VENUE
+Mon–Fri rental: $5,495 + tax (10am–10pm)
+Sat–Sun rental: $6,495 + tax (10am–10pm)
+Early morning elopement (7–9am): $1,500 + tax
+Security deposit: $1,000 (nonrefundable)
+Includes: 150 white chairs, 25 tables, air-conditioned bridal suite, restrooms, parking
+
+LAWN AREAS & CAPACITIES
+• Pavilion: up to 120 guests
+• Main Lawn: up to 250 guests (permanent 40×60 white tent)
+• Bowl Lawn: up to 250 guests
+• Water Tower Lawn: up to 200 guests
+
+CATERING (optional — Kualoa Ranch Catering)
+All F&B subject to 18% service fee + 4.712% HI state tax. Min 40 guests.
+Catering contact: Kimo Kauhane kkauhane@kualoa.com (808) 748-3220
+                  Rachael Cook  rcook@kualoa.com (808) 457-4356
+Tasting: $75/person (credited if you book) — Tue–Fri 1–2pm only
+
+ALCOHOL: Must be purchased by client directly.
+FOOD POLICY: All food must go through Kualoa Catering (except desserts & alcohol).
+COORDINATOR: Required — must be from Kualoa's approved list.`,
+  pricing: {
+    guests: 150,
+    sections: [
+      {
+        label: 'Venue',
+        optional: false,
+        rows: [
+          { label: 'Venue Rental (Sat–Sun)', amount: 6495, type: 'flat' },
+          { label: 'Security Deposit (nonrefundable)', amount: 1000, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Catering',
+        optional: true,
+        note: 'Optional vendor — Kualoa Ranch Catering. Prices exclude 18% service fee + 4.712% HI state tax. Minimum 40 guests.',
+        rows: [
+          {
+            label: 'Dinner Buffet',
+            type: 'per-person',
+            included: false,
+            packages: [
+              { name: 'Ranch House', amount: 21.95 },
+              { name: 'Hokulea',     amount: 22.95 },
+              { name: 'Orchid',      amount: 43.95 },
+              { name: 'Hibiscus',    amount: 49.95 },
+              { name: 'Hui Ohana',   amount: 54.95 },
+              { name: 'Plumeria',    amount: 54.95 },
+            ],
+            selectedPackage: 3,
+            amount: 49.95
+          },
+          { label: 'Appetizer Add-on',      amount: 6.00, type: 'per-person', included: false },
+          { label: 'Beverages',             amount: 3.50, type: 'per-person', included: false },
+          { label: 'Eco-Friendly Flatware', amount: 4.00, type: 'per-person', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+},
+{
+  id: 'v_sunset_ranch',
+  name: 'Sunset Ranch Hawaii',
+  location: "Haleiwa, O'ahu, Hawaii (North Shore)",
+  status: 'responded', capacity: '25+', style: 'Ranch / All-Inclusive',
+  contact: 'Bethany Brown', email: 'bethany@sunsetranchhawaii.com',
+  website: 'https://www.sunsetranchhawaii.com',
+  dateInquired: '',
+  docs: [
+    { name: '2026 Package Pricing Brochure.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZxsbjnSRXsrxzrThHpHZB' },
+    { name: '📸 Inspiration gallery (Derek Wong Photography)', url: 'https://www.derekwongphotography.com/sunset-ranch-hawaii-haleiwa-wedding/' },
+  ],
+  photos: {
+    credit: { name: 'Derek Wong Photography', url: 'https://www.derekwongphotography.com' },
+    sourceUrl: 'https://www.derekwongphotography.com/sunset-ranch-hawaii-haleiwa-wedding/',
+    images: [],
+  },
+  pros: ['Fully all-inclusive (catering, bar, floral, DJ, officiant, transportation)', '12 hours exclusive access — 6 venues + 2 suites + courtyard chapel', 'Flexible: credits back elements you don\'t need', 'Signature upgrade adds VW Truck Bar "The Green Honu" + lawn games'],
+  cons: ['High minimum ($34,800 for 25 guests — scales with headcount)', 'All-inclusive may include things you don\'t want', 'North Shore location — distance from Honolulu hotels'],
+  notes: `Contact: Bethany Brown, Sales Manager
+Phone: 808.365.9922 ext. 710
+Email: bethany@sunsetranchhawaii.com
+Address: 59-777 Pupukea Rd, Haleiwa, HI 96712
+
+PACKAGES (both are 12-hr exclusive access — 11am to 11pm)
+Bookings accepted through 6/30/28. 25% deposit to secure date.
+Final payment adjusted for exact headcount & customizations.
+Credits given in full for elements you don't want.
+
+Standard Package includes:
+(1) Package Coordination  (2) Event Design / All Materials
+(3) Catering  (4) Dessert  (5) Bar Service & Staffing
+(6) Floral  (7) Live Entertainment  (8) DJ Services
+(9) Officiant  (10) Transportation
++ Exclusive access to 6 venues, 2 guest suites, courtyard chapel
+
+Signature Package adds:
+Lawn Games, Lawn Signs, VW Truck Bar "The Green Honu",
+Signature Gift Crate (Aloha Collection bags + Sunset Ranch items)
+
+PRICING
+Starting minimum: $34,800 for 25 guests (~$1,392/person)
+(Exact per-person pricing in attached 2026 Package Pricing brochure)`,
+  pricing: {
+    guests: 100,
+    sections: [
+      {
+        label: 'Standard Package (all-inclusive)',
+        optional: false,
+        note: 'All-inclusive 12-hr package. Price shown is minimum for 25 guests — scales with headcount. Request brochure for per-person breakdown.',
+        rows: [
+          { label: 'Package Minimum (25 guests)', amount: 34800, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Signature Upgrade',
+        optional: true,
+        note: 'Adds lawn games, lawn signs, VW Truck Bar "The Green Honu", and signature gift crate. Pricing in brochure.',
+        rows: [
+          { label: 'Signature Add-ons', amount: 0, type: 'flat', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+},
+{
+  id: 'v_haiku_gardens',
+  name: 'Haiku Gardens',
+  location: "Kaneohe, O'ahu, Hawaii (Windward Side)",
+  status: 'responded', capacity: '130', style: 'Botanical Garden / Open-Air',
+  contact: 'Morgan Janus', email: 'weddings@haikugardens.com',
+  website: 'https://www.haikugardens.com',
+  dateInquired: '',
+  docs: [
+    { name: '📸 Inspiration (Instagram carousel)', url: 'https://www.instagram.com/p/CPRkxvUHg0k/' },
+    { name: '📸 Inspiration with dog (Instagram)', url: 'https://www.instagram.com/p/B0lwtIyFtt-/' },
+    { name: 'Haiku Gardens Wedding Packages.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZpdpjTCpCkvhbwbMcnFsw' },
+    { name: 'Lunch Wedding Info.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZpdpjTCpCkvhbwbMcnFsw' },
+    { name: 'Lunch Buffet Menu.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZpdpjTCpCkvhbwbMcnFsw' },
+    { name: 'Lunch Pupus Menu.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZpdpjTCpCkvhbwbMcnFsw' },
+    { name: 'Large Party Form.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZpdpjTCpCkvhbwbMcnFsw' },
+  ],
+  photos: {
+    credit: { name: 'View on Instagram', url: 'https://www.instagram.com/p/CPRkxvUHg0k/' },
+    sourceUrl: 'https://www.instagram.com/p/CPRkxvUHg0k/',
+    images: [],
+    altLinks: [
+      { label: 'Instagram carousel →', url: 'https://www.instagram.com/p/CPRkxvUHg0k/' },
+      { label: 'Instagram with dog →', url: 'https://www.instagram.com/p/B0lwtIyFtt-/' },
+    ],
+  },
+  pros: ["Ko'olau Mountain backdrop + tranquil pond setting", 'Wedding planning & day-of coordination included in all packages', 'Award-winning Haleiwa Joe\'s Seafood Grill on-site for reception', 'Private exclusive use — no crowds'],
+  cons: ['Daytime only (10am ceremony → 2:30pm reception end)', 'Lunch reception only — no evening events', 'Windward side location (weather consideration)', 'Limited to ~130 guests'],
+  notes: `Contact: Morgan Janus, Weddings & Special Events Manager
+Phone: 808-247-0605
+Email: weddings@haikugardens.com
+
+VENUE
+Ko'olau Mountain backdrop, tranquil koi pond, lush botanical garden.
+Choice of private gardens OR charming open-air chapel.
+Reception in award-winning Haleiwa Joe's Seafood Grill restaurant (overlooks gardens).
+
+HOURS
+Ceremony: 10:00 AM | Reception ends: 2:30 PM
+
+CAPACITY
+100–130 guests
+
+PACKAGES (all include wedding planning & day-of coordination)
+Daytime package minimum: $4,500
+Exclusive lunch reception: $500 site fee + $3,000 F&B minimum
+
+DEPOSIT
+$1,000 to secure date (ceremony + reception)
+$500 to secure date (ceremony only)
+
+See attached PDFs for full package & menu details:
+• Haiku Gardens WEDDING PACKAGES.pdf
+• LUNCH WEDDING INFO.pdf
+• LUNCH BUFFET MENU.pdf
+• LUNCH PUPUS.pdf`,
+  pricing: {
+    guests: 100,
+    sections: [
+      {
+        label: 'Venue & Ceremony',
+        optional: false,
+        rows: [
+          { label: 'Package Minimum', amount: 4500, type: 'flat' },
+          { label: 'Exclusive Lunch Reception Site Fee', amount: 500, type: 'flat' },
+          { label: 'Deposit (credited to total)', amount: 1000, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Food & Beverage',
+        optional: true,
+        note: 'F&B through Haleiwa Joe\'s Seafood Grill. Minimum $3,000. See attached menus for exact pricing.',
+        rows: [
+          { label: 'Lunch Buffet (F&B minimum)', amount: 3000, type: 'flat', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+},
+{
+  id: 'v_lanikuhonua',
+  name: 'Lanikuhonua Cultural Institute',
+  location: "Ewa Beach, O'ahu, Hawaii (Westside — Oceanfront)",
+  status: 'responded', capacity: '700', style: 'Oceanfront / Site Rental Only',
+  contact: 'Lou Salameh', email: 'lanikuhonua@jamescampbell.com',
+  website: 'https://www.jamescampbell.com',
+  dateInquired: '',
+  docs: [
+    { name: 'LCI Brochure 2027.pdf', url: 'https://mail.google.com/mail/u/2/#all/KtbxLwglnNMHRrRwwzBMSFsrFJZqtDdLrL' },
+    { name: 'LCI Rules & Regulations.pdf', url: 'https://mail.google.com/mail/u/2/#all/KtbxLwglnNMHRrRwwzBMSFsrFJZqtDdLrL' },
+    { name: '📸 Inspiration gallery (Derek Wong Photography)', url: 'https://www.derekwongphotography.com/lanikuhonua-cultural-institute-koolina-weddings/' },
+  ],
+  photos: {
+    credit: { name: 'Derek Wong Photography', url: 'https://www.derekwongphotography.com' },
+    sourceUrl: 'https://www.derekwongphotography.com/lanikuhonua-cultural-institute-koolina-weddings/',
+    images: [],
+  },
+  pros: ['Breathtaking oceanfront with Pacific sunset views', 'Accommodates up to 700 (Phase 1) or 1,000 (Phase 2) guests', 'Can host intimate events of 15+ guests', 'Timeless, dramatic natural setting'],
+  cons: ['Site-rental ONLY — zero equipment provided (tents, tables, chairs, catering all outsourced)', 'High coordination overhead — every vendor must be hired separately', 'Westside location (distance from airport/hotels)', 'No Phase 3 available'],
+  notes: `Contact: Lou Salameh
+Phone: 808-766-1213
+Email: lanikuhonua@jamescampbell.com
+Website: www.jamescampbell.com
+
+IMPORTANT: Site-rental only venue.
+NO equipment is provided on-site.
+ALL rentals & services must be sourced through your own vendors:
+• Tents  • Tables & Chairs  • Catering  • Bar Service  • etc.
+
+VENUE OPTIONS
+Phase 1 — up to 700 guests
+Phase 2 — up to 1,000 guests
+(Phase 3 no longer available)
+Both phases can host events as intimate as 15 guests.
+
+LOCATION
+Westside of Oahu — oceanfront. Expansive coastal views & sunset skies.
+
+PRICING (per LCI Brochure 2027)
+Up to 100 guests: $8,900.52 (2026/2027 rates)
+Full pricing tiers in attached LCI Brochure 2027.pdf
+
+See also: LCI Rules & Regulations (rev. 42026).pdf`,
+  pricing: {
+    guests: 100,
+    sections: [
+      {
+        label: 'Venue Rental',
+        optional: false,
+        note: 'Site rental only. No equipment included. All vendors must be hired separately.',
+        rows: [
+          { label: 'Venue Rental (up to 100 guests)', amount: 8900.52, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Vendor Rentals (estimates)',
+        optional: true,
+        note: 'All equipment must be rented separately. Estimates only — get quotes from your vendors.',
+        rows: [
+          { label: 'Tent Rental (estimate)', amount: 3000, type: 'flat', included: false },
+          { label: 'Tables & Chairs (estimate)', amount: 1500, type: 'flat', included: false },
+          { label: 'Catering (estimate)', amount: 8000, type: 'flat', included: false },
+          { label: 'Bar Service (estimate)', amount: 2500, type: 'flat', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+},
+{
+  id: 'v_loulu_palm',
+  name: 'Loulu Palm',
+  location: "Haleiwa, O'ahu, Hawaii (North Shore)",
+  status: 'responded', capacity: '100+', style: 'Farm Estate / Ceremonial Venue',
+  contact: 'Nickie Coleman', email: 'nickiloulu@gmail.com',
+  website: 'https://www.loulupalm.com',
+  dateInquired: '',
+  docs: [
+    { name: '2027–2028 Retreat Rates.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNWRjlwcLslHTTXrGKVBXhxJ' },
+    { name: 'Tidewater & Marquee Tents Layouts.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNWRjlwcLslHTTXrGKVBXhxJ' },
+    { name: '📸 Inspiration gallery + vendor credits (Mersadi Olson)', url: 'https://mersadiolson.com/2023/05/04/tropical-wedding-at-loulu-palm/' },
+  ],
+  photos: {
+    credit: { name: 'Mersadi Olson Photography', url: 'https://mersadiolson.com' },
+    sourceUrl: 'https://mersadiolson.com/2023/05/04/tropical-wedding-at-loulu-palm/',
+    images: [
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/001_Weddings-at-loulu-palm-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/002_Loulu-palm-wedding-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/005_Oahu-wedding-venues-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/016_Weddings-at-loulu-palm-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/021_Weddings-at-loulu-palm-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/028_Hawaii-wedding-photographer-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/040_Oahu-wedding-venues-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/041_Weddings-at-loulu-palm-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/047_Loulu-palm-wedding-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/057_Loulu-palm-wedding-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/065_Oahu-wedding-venues-1024x683.jpg',
+      'https://mersadiolson.com/wp-content/uploads/sites/10998/2023/05/091_Weddings-at-loulu-palm-1024x683.jpg',
+    ],
+    vendors: [
+      { role: 'Photography', name: 'Mersadi Olson', url: 'https://mersadiolson.com' },
+      { role: 'Day-of Coordinator', name: 'Ashley (Lani) Fennel', url: null },
+      { role: 'Florals', name: 'La Flor Events', url: null },
+      { role: 'Hair & Makeup', name: 'Reveal Hair & Makeup', url: 'https://revealhm.com' },
+      { role: 'Entertainment', name: 'Akahi Productions', url: null },
+      { role: 'Catering', name: 'Ke Nui Kitchen', url: null },
+    ],
+  },
+  pros: ['Lush North Shore farm estate with endemic Hawaiian plants', '12-hour retreat (11am–11pm)', 'Can provide officiant, DOC, full planning, and equipment rentals', '10% off equipment rental when using Loulu Palm DOC/planning'],
+  cons: ['Ceremonial/cultural venue only — all equipment must be rented from Loulu Palm', 'Required DOC (must be professional & insured)', 'Pricing sliding scale — no transparent fixed rates', 'Card transactions add 3.5% fee; 50% deposit non-refundable'],
+  notes: `Contact: Nickie Coleman (Tree Farmer, Love Enthusiast & Officiant)
+Mobile: 808-260-7277
+Email: nickiloulu@gmail.com | nicki@loulupalm.com
+Bookings: aloha@loulupalm.com
+Website: loulupalm.com
+
+VENUE TYPE
+Ceremonial/cultural venue only. No overnight stays. No sand ceremony on-site.
+Retreat hours: 11am–11pm (12 hours)
+
+PRICING STRUCTURE
+Sliding scale based on: guest count, day of week, equipment, and planning needs.
+See attached 2027-2028 Loulu Palm Farms Retreat Rates.pdf
+
+REQUIRED ADDITIONAL COSTS
+• Equipment setup fee: $350–$950 (varies by equipment & guest count)
+• Day-of liability insurance: $189–$750 (via eventhelper.com or own carrier)
+• Security deposit: $1,500 (fully refundable if no damages/breaches)
+• Cleaning fee: $300–$500 + 4.712% HI tax
+• Professional, insured Day-of Coordinator (DOC) required
+  — can use Loulu Palm's own DOC at additional cost
+
+PAYMENT TERMS
+• Reservation: 50% of venue rate (non-refundable, credited to total)
+• Remaining balance: due 90 days before event
+• Card transactions: +3.5% platform fee
+
+DISCOUNT
+10% off equipment rental when using Loulu Palm DOC or Full Planning services.
+
+EQUIPMENT NOTE
+All event equipment on the Loulu Palm property must be rented exclusively through Loulu Palm Weddings. Outside caterers, florists, bartenders, entertainment — your choice.
+
+See also: 2025-2026 Tidewater & Marquee Tents Layouts and Photos.pdf`,
+  pricing: {
+    guests: 100,
+    sections: [
+      {
+        label: 'Venue Retreat',
+        optional: false,
+        note: 'Sliding scale pricing — see attached rate sheet for your guest count & day.',
+        rows: [
+          { label: 'Venue Retreat Rate (TBD — see rate sheet)', amount: 0, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Required Add-ons',
+        optional: false,
+        note: 'These costs are required by the property use contract.',
+        rows: [
+          { label: 'Equipment Setup Fee', amount: 650, type: 'flat' },
+          { label: 'Day-of Liability Insurance', amount: 450, type: 'flat' },
+          { label: 'Security Deposit (refundable)', amount: 1500, type: 'flat' },
+          { label: 'Cleaning Fee', amount: 400, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Day-of Coordinator',
+        optional: true,
+        note: 'DOC is required. Use Loulu Palm\'s DOC (additional cost, unlocks 10% equipment discount) or hire your own insured professional.',
+        rows: [
+          { label: 'Loulu Palm DOC Service', amount: 0, type: 'flat', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+},
+{
+  id: 'v_hanalani_gardens',
+  name: 'Hanalani Gardens',
+  location: "Honolulu, O'ahu, Hawaii (Central — Near Airport)",
+  status: 'responded', capacity: '125', style: 'Garden / Chapel',
+  contact: 'Akemi (Best Bridal Hawaii)', email: 'info@bestbridalhawaii.com',
+  website: 'https://bestbridalhawaii.com',
+  dateInquired: '',
+  docs: [
+    { name: 'View response email (Best Bridal Hawaii)', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZxtjVvTRmrzxCBZctMmXw' },
+    { name: 'Best Bridal Hawaii Website', url: 'https://bestbridalhawaii.com/' },
+    { name: '📸 Inspiration gallery + vendor credits (Bailey Jane Photography)', url: 'https://baileyjanephotography.com/2025/01/06/jackie-micahs-wedding-at-hanalani-garden/' },
+  ],
+  photos: {
+    credit: { name: 'Bailey Jane Photography', url: 'https://baileyjanephotography.com' },
+    sourceUrl: 'https://baileyjanephotography.com/2025/01/06/jackie-micahs-wedding-at-hanalani-garden/',
+    images: [
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/01/JackieBlog.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah11.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah13.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah7.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah15.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah8-683x1024.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah5-893x1024.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah16.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah22.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah19.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah29.jpg',
+      'https://baileyjanephotography.com/wp-content/uploads/sites/58390/2025/09/JackieMicah33.jpg',
+    ],
+    vendors: [
+      { role: 'Photography', name: 'Bailey Jane Photography', url: 'https://baileyjanephotography.com' },
+      { role: 'Coordinator', name: 'Events by Shelby Kaneshiro', instagram: '@eventsbyshelbyk' },
+      { role: 'Florals', name: 'Sophia Wedding Floral', url: null },
+      { role: 'Hair & Makeup', name: 'Reveal Hair and Makeup', url: 'https://revealhm.com', instagram: '@revealhairandmakeup' },
+      { role: 'Rentals', name: 'Main Party Rentals HI', url: 'https://mprhi.com' },
+      { role: 'Bar Service', name: 'Drink Gazoz', url: 'https://drinkgazoz.com' },
+      { role: 'Live Music', name: 'Uluwehi Young', instagram: '@uluuu_y' },
+      { role: 'Catering', name: "Kalama's Kuisine", instagram: '@kalamaskuisine' },
+    ],
+  },
+  pros: ['Outdoor garden OR indoor chapel option', 'Transparent flat-rate pricing (no per-person complexity)', 'Kamaʻāina discount: 15% off base venue rental', 'Central location — close to airport & Honolulu hotels', 'Available 01/17/2027 (your preferred date)'],
+  cons: ['Limited parking (20 spaces total — 10 vendors, 10 guests)', 'Bar service exclusively through STIR Beverage ($250 fee for outside bar)', 'Events 99+ guests require HPD officer (must arrange separately)', 'No drones allowed', 'DOC required; extra consultation beyond initial costs $50/30min'],
+  notes: `Contact: Akemi — Aloha ʻĀina Weddings & Events by Best Bridal Hawaii
+Email: info@bestbridalhawaii.com
+Website: bestbridalhawaii.com
+Your preferred date 01/17/2027 is currently AVAILABLE ✓
+
+VENUE OPTIONS
+• Hanalani Garden — outdoor, up to 125 guests
+• Kailana Chapel (formerly St. Catalina Seaside Chapel) — up to 40 seated + 30 standing
+Venue includes: furniture, chapel & garden access, restrooms, bridal suite, covered lanai.
+
+KAMAAINA DISCOUNT
+15% off base venue rental fee.
+Requires Hawaii residency proof (phone number or address) for couple or immediate family member.
+Does NOT apply to extra hours, rental items, or other services.
+
+PRICING
+Partial Day — 4 hours (10am–2pm or 4pm–8pm): $2,500
+Full Day — 12 hours (10am–10pm): $4,500
+After-hours: $500 per 30 minutes
+
+DEPOSIT & BOOKING
+30% non-refundable deposit to confirm date.
+Pre-Booking Consultation: 1 initial email + 45-min consultation + 1 follow-up email (free).
+Additional consultation: $50 per 30 minutes.
+
+SPECIAL REQUIREMENTS (99+ guests)
+HPD officer required on-site. Contact: Leilani Kaluau, 808-836-0502.
+
+OTHER NOTES
+• Bar service: exclusively STIR Beverage (outside bar = $250 fee)
+• No drone use at this venue
+• Tent relocation: $250 ($125 per one-way move)
+• Parking: 20 spaces (10 vendors, 10 guests) — overflow via shuttle/Uber
+• DOC required (licensed, handles setup/cleanup/timeline)`,
+  pricing: {
+    guests: 100,
+    sections: [
+      {
+        label: 'Venue Rental',
+        optional: false,
+        rows: [
+          {
+            label: 'Rental Duration',
+            type: 'flat',
+            packages: [
+              { name: 'Partial Day (4 hrs)', amount: 2500 },
+              { name: 'Full Day (12 hrs)',   amount: 4500 },
+            ],
+            selectedPackage: 1,
+            amount: 4500
+          },
+          { label: 'Kamaʻāina Discount (–15%)', amount: -675, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Required Services',
+        optional: false,
+        note: 'HPD officer required for 99+ guests. DOC is required for all events.',
+        rows: [
+          { label: 'HPD Officer (99+ guests)', amount: 0, type: 'flat' },
+        ]
+      },
+      {
+        label: 'Optional Add-ons',
+        optional: true,
+        rows: [
+          { label: 'Outside Bar Fee (if not using STIR Beverage)', amount: 250, type: 'flat', included: false },
+          { label: 'Tent Relocation', amount: 250, type: 'flat', included: false },
+          { label: 'Extra Hours (per 30 min)', amount: 500, type: 'flat', included: false },
+        ]
+      }
+    ],
+    total: 0
+  }
+}];
+
+// ── Persistence ────────────────────────────────────────────────────────────
+// ── Supabase ───────────────────────────────────────────────────────────────
+const SUPA_URL  = 'https://lxxaqbebcbaxfnmbyceo.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4eGFxYmViY2JheGZubWJ5Y2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTE0MDcsImV4cCI6MjA5NDYyNzQwN30.eGxf8BA1-kKA_FRD3gwDgKLfLqMZVrTBetMnbhGZEf8';
+const db = (typeof supabase !== 'undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+async function load() {
+  if (db) {
+    try {
+      const { data } = await db.from('wedding_data').select('value').eq('key','venues').single();
+      if (data) { venues = data.value; localStorage.setItem('wv_venues', JSON.stringify(venues)); return; }
+    } catch(e) {}
+  }
+  try { venues = JSON.parse(localStorage.getItem('wv_venues') || '[]'); } catch(e) { venues = []; }
+}
+
+function save() {
+  localStorage.setItem('wv_venues', JSON.stringify(venues));
+  flashSave();
+  if (db) db.from('wedding_data').upsert({ key:'venues', value:venues, updated_at: new Date().toISOString() }).then(() => {});
+}
+
+function startRealtime() {
+  if (!db) return;
+  db.channel('wedding_sync')
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'wedding_data', filter:'key=eq.venues' }, payload => {
+      venues = payload.new.value;
+      localStorage.setItem('wv_venues', JSON.stringify(venues));
+      renderSidebar();
+      if (activeId) { const v = venues.find(x => x.id === activeId); if (v) loadVenueDetail(); else showView('empty'); }
+      flashSave();
+    })
+    .subscribe();
+}
+function flashSave() {
+  const el = document.getElementById('save-indicator');
+  el.classList.add('visible');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => el.classList.remove('visible'), 1800);
+}
+function seedIfNeeded() {
+  const ids = new Set(venues.map(v => v.id));
+  let changed = false;
+  SEED_VENUES.forEach(sv => {
+    if (!ids.has(sv.id)) {
+      venues.push(sv); changed = true;
+    } else {
+      // Merge new fields (photos, docs) into existing stored venues
+      const v = venues.find(x => x.id === sv.id);
+      if (v) {
+        ['photos','docs','pros','cons'].forEach(field => {
+          if (sv[field] !== undefined && v[field] === undefined) { v[field] = sv[field]; changed = true; }
+        });
+        // Always sync docs from seed if stored docs are older (fewer entries)
+        if (sv.docs && (!v.docs || v.docs.length < sv.docs.length)) { v.docs = sv.docs; changed = true; }
+      }
+    }
+  });
+  if (changed) {
+    SEED_VENUES.forEach(sv => { const v = venues.find(x => x.id === sv.id); if (v) recalcVenue(v); });
+    save();
+  }
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('venue-list');
+  if (!venues.length) {
+    list.innerHTML = '<div style="padding:20px 14px;color:var(--text-3);font-size:12.5px;text-align:center;line-height:1.7">Add a venue to get started.</div>';
+    return;
+  }
+  list.innerHTML = venues.map(v => {
+    const active = compareMode ? compareSelected.has(v.id) : v.id === activeId;
+    const total = getPricingTotal(v);
+    return `<div class="venue-item ${active?'active':''}" onclick="onVenueClick('${v.id}')">
+      <div class="venue-item-name">${esc(v.name||'Unnamed Venue')}</div>
+      ${v.location ? `<div class="venue-item-loc">${esc(v.location)}</div>` : ''}
+      <div class="venue-item-meta">
+        <span class="badge ${STATUS_CLASS[v.status]||'badge-new'}">${STATUS_LABELS[v.status]||'Inquired'}</span>
+        ${total ? `<span class="venue-item-price">${fmt(total)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getPricingTotal(v) {
+  const p = v.pricing;
+  if (!p) return 0;
+  if (p.sections) {
+    const g = p.guests || 0;
+    return p.sections.reduce((s, sec) => {
+      if (sec.optional) {
+        return s + sec.rows.filter(r => r.included).reduce((ss, r) => ss + rowTotal(r, g), 0);
+      }
+      return s + sec.rows.reduce((ss, r) => ss + rowTotal(r, g), 0);
+    }, 0);
+  }
+  if (p.rows) return p.rows.reduce((s,r) => s + rowTotal(r, p.guests||0), 0);
+  return 0;
+}
+
+function rowTotal(r, guests) {
+  const amt = parseFloat(r.amount) || 0;
+  return r.type === 'per-person' ? amt * guests : amt;
+}
+
+// ── Views ──────────────────────────────────────────────────────────────────
+function showView(which) {
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'none';
+  document.getElementById('compare-view').classList.remove('active');
+  if (which === 'detail') {
+    document.getElementById('detail-view').style.display = 'flex';
+    document.body.classList.add('mobile-detail');
+  } else if (which === 'compare') {
+    document.getElementById('compare-view').classList.add('active');
+    document.body.classList.add('mobile-detail');
+  } else {
+    document.getElementById('empty-state').style.display = 'flex';
+    document.body.classList.remove('mobile-detail');
+  }
+}
+function mobileBack() {
+  activeId = null;
+  document.body.classList.remove('mobile-detail');
+  showView('empty');
+  renderSidebar();
+}
+
+function onVenueClick(id) {
+  if (compareMode) {
+    if (compareSelected.has(id)) compareSelected.delete(id); else compareSelected.add(id);
+    renderSidebar(); renderCompare(); syncMobileCompare(); return;
+  }
+  activeId = id; renderSidebar(); loadVenueDetail(); showView('detail');
+}
+
+// ── Detail ─────────────────────────────────────────────────────────────────
+function loadVenueDetail() {
+  const v = venues.find(x => x.id === activeId);
+  if (!v) return;
+  document.getElementById('topbar-title').textContent = v.name || 'Unnamed Venue';
+  const badge = document.getElementById('topbar-badge');
+  badge.textContent = STATUS_LABELS[v.status]||'Inquired';
+  badge.className = 'badge '+(STATUS_CLASS[v.status]||'badge-new');
+  document.getElementById('status-select').value = v.status||'new';
+  document.getElementById('db-location').textContent = v.location||'';
+  document.getElementById('db-sep1').style.display = v.location?'':'none';
+  document.getElementById('db-capacity').textContent = v.capacity?`Up to ${v.capacity} guests`:'';
+  document.getElementById('db-sep2').style.display = (v.location&&v.capacity&&v.website)?'':'none';
+  document.getElementById('db-contact').innerHTML = v.website
+    ? `<a href="${esc(v.website)}" target="_blank" rel="noopener" style="color:var(--accent)">${new URL(v.website).hostname.replace(/^www\./,'')}</a>`
+    : '';
+  document.getElementById('f-name').value = v.name||'';
+  document.getElementById('f-location').value = v.location||'';
+  document.getElementById('f-capacity').value = v.capacity||'';
+  document.getElementById('f-style').value = v.style||'';
+  document.getElementById('f-contact').value = v.contact||'';
+  document.getElementById('f-email').value = v.email||'';
+  document.getElementById('f-website').value = v.website||'';
+  document.getElementById('f-date-inquired').value = v.dateInquired||'';
+  document.getElementById('f-notes').value = v.notes||'';
+  document.getElementById('notes-meta').textContent = v.notes?`${v.notes.length} characters`:'';
+  renderProscons(); renderDocs(); renderPhotos(); renderPricing();
+}
+
+function getV() { return venues.find(x => x.id === activeId); }
+
+function autoSave() {
+  const v = getV(); if (!v) return;
+  v.name = document.getElementById('f-name').value;
+  v.location = document.getElementById('f-location').value;
+  v.capacity = document.getElementById('f-capacity').value;
+  v.style = document.getElementById('f-style').value;
+  v.contact = document.getElementById('f-contact').value;
+  v.email = document.getElementById('f-email').value;
+  v.website = document.getElementById('f-website').value;
+  v.dateInquired = document.getElementById('f-date-inquired').value;
+  v.notes = document.getElementById('f-notes').value;
+  document.getElementById('topbar-title').textContent = v.name||'Unnamed Venue';
+  document.getElementById('notes-meta').textContent = v.notes?`${v.notes.length} characters`:'';
+  save(); renderSidebar();
+}
+
+function onStatusChange() {
+  const v = getV(); if (!v) return;
+  v.status = document.getElementById('status-select').value;
+  const badge = document.getElementById('topbar-badge');
+  badge.textContent = STATUS_LABELS[v.status];
+  badge.className = 'badge '+STATUS_CLASS[v.status];
+  save(); renderSidebar();
+}
+
+// ── Pros/Cons ──────────────────────────────────────────────────────────────
+function renderProscons() {
+  const v = getV(); if (!v) return;
+  renderTagList('pros-list', v.pros||[], 'pro');
+  renderTagList('cons-list', v.cons||[], 'con');
+}
+function renderTagList(id, items, type) {
+  document.getElementById(id).innerHTML = items.map((t,i) =>
+    `<span class="tag ${type}-tag">${esc(t)}<button class="tag-del" onclick="removeTag('${type}',${i})">×</button></span>`).join('');
+}
+function openTagModal(type) {
+  currentTagType = type;
+  document.getElementById('tag-modal-title').textContent = type==='pro'?'Add a Pro':'Add a Con';
+  document.getElementById('tag-input').value = '';
+  document.getElementById('tag-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('tag-input').focus(),50);
+}
+function closeTagModal() { document.getElementById('tag-modal').classList.remove('open'); }
+function saveTag() {
+  const val = document.getElementById('tag-input').value.trim(); if (!val) return;
+  const v = getV(); if (!v) return;
+  if (currentTagType==='pro'){v.pros=v.pros||[];v.pros.push(val);}
+  else{v.cons=v.cons||[];v.cons.push(val);}
+  save(); renderProscons(); closeTagModal();
+}
+function removeTag(type,idx) {
+  const v=getV();if(!v)return;
+  if(type==='pro')v.pros.splice(idx,1);else v.cons.splice(idx,1);
+  save();renderProscons();
+}
+document.getElementById('tag-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveTag();if(e.key==='Escape')closeTagModal();});
+
+// ── Documents ─────────────────────────────────────────────────────────────
+function renderDocs() {
+  const v = getV(); if (!v) return;
+  const docs = v.docs || [];
+  const list = document.getElementById('docs-list');
+  if (docs.length === 0) {
+    list.innerHTML = '<span style="font-size:12.5px;color:var(--text-3)">No documents yet — add a link to a PDF, email, or website.</span>';
+    return;
+  }
+  list.innerHTML = docs.map((d, i) => {
+    const isPdf = d.name.toLowerCase().endsWith('.pdf');
+    const isGmail = d.url && d.url.includes('mail.google.com');
+    const icon = isPdf ? '📄' : isGmail ? '📧' : '🔗';
+    return `<div class="doc-item">
+      <span class="doc-icon">${icon}</span>
+      <a class="doc-link" href="${esc(d.url)}" target="_blank" rel="noopener" title="${esc(d.url)}">${esc(d.name)}</a>
+      <button class="doc-del" onclick="removeDoc(${i})" title="Remove">×</button>
+    </div>`;
+  }).join('');
+}
+function openAddDocModal() {
+  document.getElementById('doc-name-input').value = '';
+  document.getElementById('doc-url-input').value = '';
+  document.getElementById('doc-modal').classList.add('open');
+  setTimeout(() => document.getElementById('doc-name-input').focus(), 50);
+}
+function closeAddDocModal() { document.getElementById('doc-modal').classList.remove('open'); }
+function saveDoc() {
+  const name = document.getElementById('doc-name-input').value.trim();
+  const url  = document.getElementById('doc-url-input').value.trim();
+  if (!name || !url) return;
+  const v = getV(); if (!v) return;
+  v.docs = v.docs || [];
+  v.docs.push({ name, url });
+  save(); renderDocs(); closeAddDocModal();
+}
+function removeDoc(idx) {
+  const v = getV(); if (!v) return;
+  v.docs.splice(idx, 1);
+  save(); renderDocs();
+}
+document.getElementById('doc-modal').addEventListener('click', e => { if (e.target === document.getElementById('doc-modal')) closeAddDocModal(); });
+
+// ── Photos ────────────────────────────────────────────────────────────────
+function renderPhotos() {
+  const v = getV(); if (!v) return;
+  const data = v.photos;
+  const creditBar = document.getElementById('photos-credit-bar');
+  const grid = document.getElementById('photos-grid');
+  const vendorsEl = document.getElementById('photos-vendors');
+
+  if (!data) {
+    creditBar.innerHTML = '';
+    grid.innerHTML = `<div class="photos-empty"><div class="photos-empty-icon">🖼</div>No photos added for this venue yet.</div>`;
+    vendorsEl.innerHTML = '';
+    return;
+  }
+
+  // Credit bar
+  const creditLink = data.credit ? `<a href="${esc(data.credit.url)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:500">${esc(data.credit.name)}</a>` : '';
+  const sourceLink = data.sourceUrl ? `<a href="${esc(data.sourceUrl)}" target="_blank" rel="noopener" style="color:var(--text-3);font-size:12px">View full gallery →</a>` : '';
+  creditBar.innerHTML = creditLink ? `<span>📸</span> ${creditLink} ${sourceLink ? '&nbsp;'+sourceLink : ''}` : sourceLink;
+
+  // Grid
+  if (!data.images || data.images.length === 0) {
+    const links = (data.altLinks || []).map(l =>
+      `<a href="${esc(l.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(l.label)}</a>`).join(' &nbsp;·&nbsp; ');
+    grid.innerHTML = `<div class="photos-empty">
+      <div class="photos-empty-icon">🔗</div>
+      <div style="margin-bottom:12px;color:var(--text-2)">Photos can't be embedded from this source.</div>
+      ${links || (data.sourceUrl ? `<a href="${esc(data.sourceUrl)}" target="_blank" style="color:var(--accent)">View gallery on photographer's site →</a>` : '')}
+    </div>`;
+  } else {
+    grid.innerHTML = data.images.map(url =>
+      `<img src="${esc(url)}" loading="lazy" alt="" onerror="this.style.display='none'" onclick="window.open('${esc(data.sourceUrl||url)}','_blank')" title="Click to open source">`
+    ).join('');
+  }
+
+  // Vendor credits from shoot
+  if (data.vendors && data.vendors.length) {
+    vendorsEl.innerHTML = `<div class="section-title" style="margin-bottom:10px">Vendors seen in this shoot</div>
+      <div class="photos-vendors-grid">${data.vendors.map(vd => `
+        <div class="vendor-chip">
+          <div class="vendor-chip-role">${esc(vd.role)}</div>
+          <div class="vendor-chip-name">${esc(vd.name)}</div>
+          ${vd.url ? `<div><a href="${esc(vd.url)}" target="_blank" rel="noopener">${esc(vd.url.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])}</a></div>` : ''}
+          ${vd.instagram ? `<div><a href="https://instagram.com/${esc(vd.instagram.replace('@',''))}" target="_blank" rel="noopener">${esc(vd.instagram)}</a></div>` : ''}
+        </div>`).join('')}
+      </div>`;
+  } else {
+    vendorsEl.innerHTML = '';
+  }
+}
+
+// ── Pricing ────────────────────────────────────────────────────────────────
+function ensurePricingSections(v) {
+  if (!v.pricing) v.pricing = { guests: 100, sections: [{ label:'Venue', optional:false, rows:[] }, { label:'Optional Add-ons', optional:true, rows:[] }], total:0 };
+  // migrate old flat rows format
+  if (v.pricing.rows && !v.pricing.sections) {
+    v.pricing.sections = [{ label:'Costs', optional:false, rows: v.pricing.rows }];
+    delete v.pricing.rows;
+  }
+}
+
+function renderPricing() {
+  const v = getV(); if (!v) return;
+  ensurePricingSections(v);
+  const p = v.pricing;
+  document.getElementById('p-guests').value = p.guests || 100;
+  renderPricingSections(v);
+  renderPricingSummary(v);
+  renderCategoryChips();
+}
+
+function renderPricingSections(v) {
+  const p = v.pricing;
+  const g = parseInt(document.getElementById('p-guests').value) || 0;
+  const wrap = document.getElementById('pricing-sections');
+  wrap.innerHTML = '';
+
+  p.sections.forEach((sec, si) => {
+    const secEl = document.createElement('div');
+    secEl.className = 'pricing-section';
+
+    // Section header
+    const includedRows = sec.optional ? sec.rows.filter(r=>r.included) : sec.rows;
+    const secTotal = includedRows.reduce((s,r)=>s+rowTotal(r,g),0);
+    const hdr = document.createElement('div');
+    hdr.className = 'pricing-section-header';
+    hdr.innerHTML = `
+      <div class="pricing-section-label">${esc(sec.label)}</div>
+      ${sec.optional ? '<span class="optional-badge">Optional</span>' : ''}
+      <div class="pricing-section-subtotal">${secTotal>0||!sec.optional ? fmt(secTotal) : '—'}</div>
+    `;
+    secEl.appendChild(hdr);
+
+    if (sec.optional && sec.note) {
+      const noteEl = document.createElement('div');
+      noteEl.className = 'optional-note';
+      noteEl.textContent = sec.note;
+      secEl.appendChild(noteEl);
+    }
+
+    // Rows
+    sec.rows.forEach((row, ri) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'pricing-row' + (sec.optional && !row.included ? ' disabled' : '');
+
+      const checkHtml = sec.optional
+        ? `<input type="checkbox" class="pricing-row-check" ${row.included?'checked':''} onchange="toggleRowIncluded(${si},${ri},this.checked)">`
+        : `<div></div>`;
+
+      const typeHtml = `<select class="pricing-row-type" onchange="updateRow(${si},${ri},'type',this.value)">
+        <option value="flat" ${row.type==='flat'?'selected':''}>flat</option>
+        <option value="per-person" ${row.type==='per-person'?'selected':''}>/person</option>
+      </select>`;
+
+      const excluded = sec.optional && !row.included;
+      const subTotal = excluded ? 'not included' : fmt(rowTotal(row, g));
+
+      rowEl.innerHTML = `
+        ${checkHtml}
+        <input class="pricing-row-label-input" value="${esc(row.label)}" oninput="updateRow(${si},${ri},'label',this.value)">
+        <div class="pricing-row-amount-wrap">
+          <span>$</span>
+          <input type="number" class="pricing-row-amount" value="${row.amount}" oninput="updateRow(${si},${ri},'amount',this.value)">
+          ${typeHtml}
+        </div>
+        <div class="pricing-row-subtotal${excluded?' excluded':''}">${subTotal}</div>
+        <button class="pricing-row-del" onclick="removeRow(${si},${ri})" title="Remove row">×</button>
+      `;
+
+      secEl.appendChild(rowEl);
+
+      // Package picker
+      if (row.packages && row.packages.length) {
+        const pkgWrap = document.createElement('div');
+        pkgWrap.className = 'pricing-row';
+        pkgWrap.style.gridTemplateColumns = '20px 1fr';
+        pkgWrap.style.paddingTop = '0';
+        if (sec.optional && !row.included) pkgWrap.classList.add('disabled');
+        pkgWrap.innerHTML = `<div></div><div class="package-picker-wrap">
+          <div class="package-picker">
+            ${row.packages.map((pkg,pi)=>`
+              <div class="pkg-chip ${pi===row.selectedPackage?'selected':''}" onclick="selectPackage(${si},${ri},${pi})">
+                <div class="pkg-chip-name">${esc(pkg.name)}</div>
+                <div class="pkg-chip-price">$${pkg.amount.toFixed(2)}/pp</div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+        secEl.appendChild(pkgWrap);
+      }
+    });
+
+    // Add row button per section
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-ghost btn-sm';
+    addBtn.style.marginTop = '8px';
+    addBtn.textContent = '+ Add line item';
+    addBtn.onclick = () => addRowToSection(si);
+    secEl.appendChild(addBtn);
+
+    wrap.appendChild(secEl);
+  });
+}
+
+function renderPricingSummary(v) {
+  const p = v.pricing;
+  const g = p.guests || 0;
+  let required = 0, optional = 0;
+  p.sections.forEach(sec => {
+    if (!sec.optional) {
+      required += sec.rows.reduce((s,r)=>s+rowTotal(r,g),0);
+    } else {
+      optional += sec.rows.filter(r=>r.included).reduce((s,r)=>s+rowTotal(r,g),0);
+    }
+  });
+  const total = required + optional;
+  const hasOptional = p.sections.some(s=>s.optional);
+  const optionalIncluded = p.sections.some(s=>s.optional&&s.rows.some(r=>r.included));
+
+  // count how many sections have any amount entered
+  const filledSections = p.sections.filter(sec =>
+    sec.rows.some(r => parseFloat(r.amount) > 0)
+  ).map(s => s.label);
+
+  document.getElementById('pricing-summary-wrap').innerHTML = `
+    <div class="pricing-summary" style="margin-bottom:8px">
+      <div class="pricing-summary-cell">
+        <div class="pricing-summary-label">Required</div>
+        <div class="pricing-summary-amount">${fmt(required)}</div>
+        <div class="pricing-summary-note">Always included</div>
+      </div>
+      <div class="pricing-summary-cell">
+        <div class="pricing-summary-label">Optional (checked)</div>
+        <div class="pricing-summary-amount">${hasOptional ? fmt(optional) : '—'}</div>
+        <div class="pricing-summary-note">${optionalIncluded ? 'Toggle rows below' : 'None checked yet'}</div>
+      </div>
+      <div class="pricing-summary-cell total">
+        <div class="pricing-summary-label">Running Total</div>
+        <div class="pricing-summary-amount">${fmt(total)}</div>
+        ${g ? `<div class="pricing-summary-note">${fmt(Math.round(total/g))} / guest</div>` : ''}
+      </div>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-3);margin-bottom:20px;padding:0 2px">
+      Covers: <strong style="color:var(--text-2)">${filledSections.length ? filledSections.join(', ') : 'nothing yet'}</strong>
+      — add more categories below for a fuller picture.
+    </div>`;
+}
+
+function toggleRowIncluded(si, ri, val) {
+  const v = getV(); if (!v) return;
+  v.pricing.sections[si].rows[ri].included = val;
+  recalcVenue(v); save(); renderPricing(); renderSidebar();
+}
+
+function updateRow(si, ri, field, val) {
+  const v = getV(); if (!v) return;
+  const row = v.pricing.sections[si].rows[ri];
+  row[field] = field==='amount' ? parseFloat(val)||0 : val;
+  recalcVenue(v); save();
+  // live-update subtotal cell without full re-render
+  const g = parseInt(document.getElementById('p-guests').value)||0;
+  const allRowEls = document.querySelectorAll('#pricing-sections .pricing-row');
+  // re-render summary and section subtotals
+  renderPricingSummary(v);
+  renderSidebar();
+}
+
+function selectPackage(si, ri, pi) {
+  const v = getV(); if (!v) return;
+  const row = v.pricing.sections[si].rows[ri];
+  row.selectedPackage = pi;
+  row.amount = row.packages[pi].amount;
+  recalcVenue(v); save(); renderPricing(); renderSidebar();
+}
+
+function addRowToSection(si) {
+  const v = getV(); if (!v) return;
+  const sec = v.pricing.sections[si];
+  sec.rows.push({ label:'New line item', amount:0, type:'flat', ...(sec.optional?{included:false}:{}) });
+  save(); renderPricing();
+}
+
+const BUDGET_CATEGORIES = [
+  { label:'Photography & Video', rows:[{label:'Photographer',amount:0,type:'flat'},{label:'Videographer',amount:0,type:'flat'}] },
+  { label:'Florals & Décor',    rows:[{label:'Florals',amount:0,type:'flat'},{label:'Décor / Rentals',amount:0,type:'flat'}] },
+  { label:'Music & Entertainment', rows:[{label:'DJ / Band',amount:0,type:'flat'},{label:'Ceremony musicians',amount:0,type:'flat'}] },
+  { label:'Hair & Makeup',      rows:[{label:'Bridal hair & makeup',amount:0,type:'flat'},{label:'Bridal party',amount:0,type:'flat'}] },
+  { label:'Officiant',          rows:[{label:'Officiant fee',amount:0,type:'flat'}] },
+  { label:'Transportation',     rows:[{label:'Shuttle / transportation',amount:0,type:'flat'}] },
+  { label:'Cake & Desserts',    rows:[{label:'Wedding cake',amount:0,type:'flat'}] },
+  { label:'Invitations & Paper', rows:[{label:'Invitations & postage',amount:0,type:'flat'},{label:'Programs / menus',amount:0,type:'flat'}] },
+  { label:'Attire',             rows:[{label:'Wedding dress / alterations',amount:0,type:'flat'},{label:'Groom / partner attire',amount:0,type:'flat'}] },
+  { label:'Other',              rows:[{label:'Miscellaneous',amount:0,type:'flat'}] },
+];
+
+function renderCategoryChips() {
+  const v = getV(); if (!v) return;
+  const existing = new Set(v.pricing.sections.map(s=>s.label));
+  const el = document.getElementById('category-chips'); if (!el) return;
+  const available = BUDGET_CATEGORIES.filter(c => !existing.has(c.label));
+  if (!available.length) { el.innerHTML = '<span style="font-size:12px;color:var(--text-3)">All categories added.</span>'; return; }
+  el.innerHTML = available.map(c =>
+    `<button class="tag-add" onclick="addCategory('${esc(c.label)}')">+ ${esc(c.label)}</button>`
+  ).join('');
+}
+
+function addCategory(label) {
+  const v = getV(); if (!v) return;
+  const template = BUDGET_CATEGORIES.find(c=>c.label===label);
+  if (!template) return;
+  v.pricing.sections.push({
+    label,
+    optional: true,
+    rows: template.rows.map(r=>({...r, included:false}))
+  });
+  save(); renderPricing();
+}
+
+function removeRow(si, ri) {
+  const v = getV(); if (!v) return;
+  v.pricing.sections[si].rows.splice(ri, 1);
+  recalcVenue(v); save(); renderPricing(); renderSidebar();
+}
+
+function recalc() {
+  const v = getV(); if (!v) return;
+  const g = parseInt(document.getElementById('p-guests').value)||0;
+  v.pricing.guests = g;
+  recalcVenue(v); save(); renderPricing(); renderSidebar();
+}
+
+function recalcVenue(v) {
+  if (!v?.pricing) return;
+  v.pricing.total = getPricingTotal(v);
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── Compare ────────────────────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 720; }
+
+function syncMobileCompare() {
+  const footer = document.getElementById('mobile-compare-footer');
+  const btn = document.getElementById('mobile-view-compare-btn');
+  const backBtn = document.getElementById('compare-back-btn');
+  if (compareMode && isMobile()) {
+    footer.style.display = '';
+    const n = compareSelected.size;
+    btn.textContent = n >= 2 ? `View Comparison (${n}) →` : `Select venues to compare`;
+    btn.disabled = n < 2;
+    if (backBtn) backBtn.style.display = 'inline-flex';
+  } else {
+    footer.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'none';
+  }
+}
+
+function toggleCompare() {
+  compareMode = !compareMode; compareSelected.clear();
+  if (compareMode) {
+    if (isMobile()) {
+      // On mobile: keep sidebar visible for selection; footer button goes to table
+      document.body.classList.remove('mobile-detail');
+    } else {
+      showView('compare'); renderCompare();
+    }
+  } else {
+    if (activeId){ loadVenueDetail(); showView('detail'); } else showView('empty');
+  }
+  renderSidebar();
+  syncMobileCompare();
+}
+
+function mobileCompareBack() {
+  // Go back to sidebar selection without exiting compare mode
+  document.body.classList.remove('mobile-detail');
+  syncMobileCompare();
+}
+
+function renderCompare() {
+  const sel = [...compareSelected].map(id=>venues.find(v=>v.id===id)).filter(Boolean);
+  const ph = document.getElementById('compare-placeholder');
+  const tbl = document.getElementById('compare-table');
+  if (sel.length < 2) { ph.style.display=''; tbl.style.display='none'; return; }
+  ph.style.display='none'; tbl.style.display='';
+
+  const prices = sel.map(v=>getPricingTotal(v));
+  const minPrice = Math.min(...prices.filter(p=>p>0));
+
+  const rows = [
+    {label:'Status',      fn:v=>`<span class="badge ${STATUS_CLASS[v.status]||'badge-new'}">${STATUS_LABELS[v.status]||''}</span>`},
+    {label:'Location',    fn:v=>esc(v.location||'—')},
+    {label:'Capacity',    fn:v=>v.capacity?`Up to ${v.capacity} guests`:'—'},
+    {label:'Style',       fn:v=>esc(v.style||'—')},
+    {label:'Required Costs', fn:v=>{
+      if (!v.pricing?.sections) return fmt(getPricingTotal(v));
+      const g=v.pricing.guests||0;
+      const req = v.pricing.sections.filter(s=>!s.optional).reduce((s,sec)=>s+sec.rows.reduce((ss,r)=>ss+rowTotal(r,g),0),0);
+      return fmt(req);
+    }},
+    {label:'With Optional', fn:v=>{
+      const t=getPricingTotal(v);
+      const cls=(t&&t===minPrice)?' class="compare-best"':'';
+      return `<span${cls}>${t?fmt(t):'—'}</span>`;
+    }},
+    {label:'Per Guest',   fn:v=>{ const g=v.pricing?.guests; const t=getPricingTotal(v); return (g&&t)?fmt(Math.round(t/g)):'—'; }},
+    {label:'Pros',        fn:v=>(v.pros||[]).map(p=>`<span class="tag pro-tag" style="font-size:11.5px">${esc(p)}</span>`).join(' ')||'—'},
+    {label:'Cons',        fn:v=>(v.cons||[]).map(c=>`<span class="tag con-tag" style="font-size:11.5px">${esc(c)}</span>`).join(' ')||'—'},
+    {label:'Contact',     fn:v=>[v.contact,v.email?`<a href="mailto:${esc(v.email)}" style="color:var(--accent)">${esc(v.email)}</a>`:null].filter(Boolean).join('<br>')||'—'},
+    {label:'Website',     fn:v=>v.website?`<a href="${esc(v.website)}" target="_blank" rel="noopener" style="color:var(--accent)">Visit ↗</a>`:'—'},
+  ];
+
+  tbl.innerHTML = `<thead><tr>
+    <th class="row-label"></th>
+    ${sel.map(v=>`<th>${esc(v.name||'Unnamed')}<br><span style="font-size:11px;color:var(--text-3);font-family:inherit;font-weight:400">${esc(v.location||'')}</span></th>`).join('')}
+  </tr></thead>
+  <tbody>${rows.map(r=>`<tr>
+    <td class="row-label">${r.label}</td>
+    ${sel.map(v=>`<td>${r.fn(v)}</td>`).join('')}
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── Add Venue ──────────────────────────────────────────────────────────────
+function openAddModal() { document.getElementById('add-modal').classList.add('open'); setTimeout(()=>document.getElementById('m-url-fetch').focus(),50); }
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+function saveNewVenue() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { document.getElementById('m-name').focus(); return; }
+  const fetchEl = document.getElementById('m-url-fetch');
+  let extractedPricingRows = [];
+  try { extractedPricingRows = JSON.parse(fetchEl.dataset.pricing||'[]'); } catch(e){}
+  const pricing = {
+    guests: 100,
+    sections: [
+      { label:'Venue', optional:false, rows: extractedPricingRows.length ? extractedPricingRows : [] },
+      { label:'Optional Add-ons', optional:true, rows:[] }
+    ],
+    total: 0
+  };
+  const v = {
+    id:'v_'+Date.now(), name,
+    location: document.getElementById('m-location').value.trim(),
+    status: document.getElementById('m-status').value,
+    capacity: document.getElementById('m-capacity').value,
+    contact: document.getElementById('m-contact').value.trim(),
+    email: document.getElementById('m-email').value.trim(),
+    website: document.getElementById('m-website').value.trim(),
+    style: fetchEl.dataset.style||'',
+    notes: fetchEl.dataset.notes||'',
+    pros:[], cons:[], pricing
+  };
+  venues.push(v); recalcVenue(v); save();
+  ['m-name','m-location','m-capacity','m-contact','m-email','m-website','m-url-fetch']
+    .forEach(id=>{const el=document.getElementById(id);el.value='';delete el.dataset.style;delete el.dataset.notes;delete el.dataset.pricing;});
+  document.getElementById('m-status').value='new';
+  document.getElementById('fetch-status').style.display='none';
+  closeAddModal(); activeId=v.id; renderSidebar(); loadVenueDetail(); showView('detail');
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────
+function deleteVenue() {
+  const v=getV(); if(!v) return;
+  if (!confirm(`Remove "${v.name||'this venue'}"? This can't be undone.`)) return;
+  venues=venues.filter(x=>x.id!==activeId);
+  activeId=null; document.body.classList.remove('mobile-detail'); save(); renderSidebar();
+  showView('empty');
+}
+
+// ── URL Fetch ──────────────────────────────────────────────────────────────
+async function fetchVenueUrl() {
+  const urlVal = document.getElementById('m-url-fetch').value.trim(); if (!urlVal) return;
+  const status = document.getElementById('fetch-status');
+  const btn = document.getElementById('fetch-btn');
+  status.style.display=''; status.style.color='var(--text-3)'; status.textContent='Fetching…';
+  btn.disabled=true; btn.textContent='…';
+  try {
+    const res = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(urlVal));
+    if (!res.ok) throw new Error();
+    const json = await res.json();
+    const ex = parseVenuePage(json.contents||'', urlVal);
+    applyExtracted(ex);
+    const filled = Object.entries(ex).filter(([k,v])=>v&&String(v).trim()&&k!=='pricingRows').length + (ex.pricingRows?.length||0);
+    status.style.color='var(--accent)';
+    status.textContent=`✓ Extracted ${filled} field${filled!==1?'s':''} — review below.`;
+  } catch(e) {
+    status.style.color='var(--s-top)';
+    status.textContent='Could not reach that page. Fill in manually below.';
+  }
+  btn.disabled=false; btn.textContent='Fetch Info';
+}
+
+function parseVenuePage(html, sourceUrl) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const text = doc.body?.innerText||doc.body?.textContent||'';
+  const get = sel=>doc.querySelector(sel)?.getAttribute('content')?.trim()||'';
+  let name = get('meta[property="og:site_name"]')||get('meta[property="og:title"]')||doc.querySelector('title')?.textContent?.trim()||'';
+  name = name.replace(/\s*[|\-–—].*$/,'').trim();
+  const desc = get('meta[property="og:description"]')||get('meta[name="description"]')||'';
+  let location='';
+  const ogL=get('meta[property="og:locality"]'),ogR=get('meta[property="og:region"]');
+  if(ogL||ogR){location=[ogL,ogR].filter(Boolean).join(', ');}
+  if(!location){
+    const schema=[...doc.querySelectorAll('script[type="application/ld+json"]')].map(s=>{try{return JSON.parse(s.textContent);}catch(e){return null;}}).filter(Boolean);
+    for(const s of schema){const addr=s?.address||s?.location?.address;if(addr){location=[addr.addressLocality,addr.addressRegion].filter(Boolean).join(', ');break;}}
+  }
+  if(!location){const m=text.match(/\b([A-Z][a-z]{2,},\s*[A-Z]{2})\b/);if(m)location=m[1];}
+  const emailM=text.match(/[\w.+\-]+@[\w\-]+\.[a-z]{2,}(?:\.[a-z]{2,})?/i);
+  const capM=text.match(/(?:up\s+to|seat(?:s|ing)?|capac(?:ity)?(?:\s+of)?|accommodate[sd]?)\s+(\d{2,4})/i)||text.match(/(\d{2,4})\s*(?:guests?|people)/i);
+  const styleWords=['barn','garden','ballroom','estate','winery','vineyard','rooftop','loft','mansion','greenhouse','farmhouse','museum','gallery','industrial','rustic','beach','waterfront','historic','castle','chapel'];
+  const foundStyles=styleWords.filter(w=>text.toLowerCase().includes(w));
+  const lines=text.split(/\n+/).map(l=>l.trim()).filter(l=>l.includes('$'));
+  const pricingRows=[]; const seen=new Set();
+  for(const line of lines){
+    const amounts=[...line.matchAll(/\$\s*([\d,]+(?:\.\d{2})?)/g)];
+    for(const m of amounts){
+      const raw=parseFloat(m[1].replace(/,/g,''));
+      if(!raw||raw<100||raw>150000)continue;
+      const key=raw+'|'+line.slice(0,80);
+      if(seen.has(key))continue; seen.add(key);
+      const lower=line.toLowerCase();
+      const isPerPerson=/per\s*(?:person|guest)|\/\s*(?:person|guest)|\bpp\b/.test(lower);
+      let label='';
+      if(/\bvenue\b|\bsite\b|\bfacility\b|\brental\b|\bhire\b/.test(lower))label='Venue Rental';
+      else if(/\bcater(?:ing)?\b|\bfood\b|\bdining\b/.test(lower))label=isPerPerson?'Catering (per person)':'Catering';
+      else if(/\bbar\b|\bbeverage\b|\bdrink\b|\balcohol\b/.test(lower))label=isPerPerson?'Bar (per person)':'Bar Package';
+      else if(/\bpackage\b/.test(lower))label='Package';
+      else if(/\bminimum\b|\bspend\b/.test(lower))label='Minimum Spend';
+      else if(/\bceremony\b/.test(lower))label='Ceremony Fee';
+      else label=line.replace(/\$[\d,]+(?:\.\d{2})?/g,'').replace(/[:\-–|]+$/,'').trim().slice(0,50)||'Line Item';
+      pricingRows.push({label,amount:raw,type:isPerPerson?'per-person':'flat'});
+    }
+  }
+  const labelSeen=new Set();
+  const deduped=pricingRows.filter(r=>{const k=r.label+'|'+r.type;if(labelSeen.has(k))return false;labelSeen.add(k);return true;});
+  return {name,location,email:emailM?emailM[0].toLowerCase():'',capacity:capM?capM[1]:'',style:foundStyles.slice(0,2).map(s=>s[0].toUpperCase()+s.slice(1)).join(', '),website:sourceUrl,notes:desc,pricingRows:deduped};
+}
+
+function applyExtracted(ex) {
+  if(ex.name)document.getElementById('m-name').value=ex.name;
+  if(ex.location)document.getElementById('m-location').value=ex.location;
+  if(ex.capacity)document.getElementById('m-capacity').value=ex.capacity;
+  if(ex.email)document.getElementById('m-email').value=ex.email;
+  if(ex.website)document.getElementById('m-website').value=ex.website;
+  const el=document.getElementById('m-url-fetch');
+  el.dataset.style=ex.style||''; el.dataset.notes=ex.notes||'';
+  el.dataset.pricing=JSON.stringify(ex.pricingRows||[]);
+}
+
+// ── Export / Import ────────────────────────────────────────────────────────
+function exportData() {
+  const blob=new Blob([JSON.stringify({venues},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='venues-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function importData(){document.getElementById('import-file').click();}
+function onImportFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    try{
+      const data=JSON.parse(evt.target.result);
+      if(data.venues&&Array.isArray(data.venues)){
+        if(confirm(`Import ${data.venues.length} venues? This will merge with your current data.`)){
+          const ids=new Set(venues.map(v=>v.id));
+          data.venues.forEach(v=>{if(!ids.has(v.id))venues.push(v);});
+          save();renderSidebar();alert('Import complete.');
+        }
+      }
+    }catch(err){alert('Could not read file.');}
+  };
+  reader.readAsText(file); e.target.value='';
+}
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  const root=document.documentElement;
+  const cur=root.getAttribute('data-theme');
+  const isDark=cur==='dark'||(!cur&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  root.setAttribute('data-theme',isDark?'light':'dark');
+  localStorage.setItem('wv_theme',isDark?'light':'dark');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(n){return '$'+Math.round(n||0).toLocaleString('en-US');}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(async function init(){
+  const t=localStorage.getItem('wv_theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  await load(); seedIfNeeded(); renderSidebar();
+  if(venues.length){activeId=venues[0].id;loadVenueDetail();showView('detail');}
+  else showView('empty');
+  startRealtime();
+  document.getElementById('add-modal').addEventListener('click',e=>{if(e.target===document.getElementById('add-modal'))closeAddModal();});
+  document.getElementById('tag-modal').addEventListener('click',e=>{if(e.target===document.getElementById('tag-modal'))closeTagModal();});
+  document.getElementById('add-modal').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target!==document.querySelector('#add-modal .btn-ghost'))saveNewVenue();if(e.key==='Escape')closeAddModal();});
+  document.getElementById('m-url-fetch').addEventListener('keydown',e=>{if(e.key==='Enter')fetchVenueUrl();});
+})();
+</script>
