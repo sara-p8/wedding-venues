@@ -1609,8 +1609,8 @@ function renderSummaryTab() {
     <div class="summary-stat"><div class="summary-stat-label">Style</div><div class="summary-stat-value">${esc(v.style||'—')}</div></div>
   </div>`;
   html += `<div class="summary-our-take">
-    <div class="summary-section-label">Our thoughts</div>
-    <textarea class="notes-area" id="our-take-field" style="min-height:72px" placeholder="What do you two think? Write a quick note for your friend…" oninput="onOurTakeInput()">${esc(v.ourTake||'')}</textarea>
+    <div class="summary-section-label">Dags, add your notes here 💐</div>
+    <textarea class="notes-area" id="our-take-field" style="min-height:72px" placeholder="What do you think of this one? Gut reactions welcome…" oninput="onOurTakeInput()">${esc(v.ourTake||'')}</textarea>
   </div>`;
   if ((v.pros&&v.pros.length)||(v.cons&&v.cons.length)) {
     html += `<div class="summary-proscons">`;
