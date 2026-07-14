@@ -834,11 +834,28 @@ COORDINATOR: Required — must be from Kualoa's approved list.`,
   docs: [
     { name: '2026 Package Pricing Brochure.pdf', url: 'https://mail.google.com/mail/u/2/#all/FMfcgzQhVNXZxsbjnSRXsrxzrThHpHZB' },
     { name: '📸 Inspiration gallery (Derek Wong Photography)', url: 'https://www.derekwongphotography.com/sunset-ranch-hawaii-haleiwa-wedding/' },
+    { name: '📸 Inspiration gallery (Taylor Dewey Photography)', url: 'https://taylordeweyphoto.com/2024/01/12/anika-edins-sunset-ranch-north-shore-oahu-wedding/' },
   ],
   photos: {
-    credit: { name: 'Derek Wong Photography', url: 'https://www.derekwongphotography.com' },
-    sourceUrl: 'https://www.derekwongphotography.com/sunset-ranch-hawaii-haleiwa-wedding/',
-    images: [],
+    credit: { name: 'Taylor Dewey Photography', url: 'https://taylordeweyphoto.com' },
+    sourceUrl: 'https://taylordeweyphoto.com/2024/01/12/anika-edins-sunset-ranch-north-shore-oahu-wedding/',
+    images: [
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/6A3A9160-scaled.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5665-683x1024.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5767-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5782-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5841-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5863-1-656x1024.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A5983-1-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A6066-683x1024.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A6192-683x1024.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A6259-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A6468-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/4O7A6567-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/6A3A8793-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/6A3A9237-1024x683.jpg',
+      'https://taylordeweyphoto.com/wp-content/uploads/sites/16162/2024/01/6A3A9714-1024x683.jpg',
+    ],
   },
   pros: ['Fully all-inclusive (catering, bar, floral, DJ, officiant, transportation)', '12 hours exclusive access — 6 venues + 2 suites + courtyard chapel', 'Flexible: credits back elements you don\'t need', 'Signature upgrade adds VW Truck Bar "The Green Honu" + lawn games'],
   cons: ['High minimum ($34,800 for 25 guests — scales with headcount)', 'All-inclusive may include things you don\'t want', 'North Shore location — distance from Honolulu hotels'],
@@ -1485,8 +1502,9 @@ function seedIfNeeded() {
         ['photos','docs','pros','cons','ourTake'].forEach(field => {
           if (sv[field] !== undefined && v[field] === undefined) { v[field] = sv[field]; changed = true; }
         });
-        // Always sync docs from seed if stored docs are older (fewer entries)
+        // Always sync docs/photos from seed if stored version is older
         if (sv.docs && (!v.docs || v.docs.length < sv.docs.length)) { v.docs = sv.docs; changed = true; }
+        if (sv.photos && sv.photos.images && (!v.photos || !v.photos.images || v.photos.images.length < sv.photos.images.length)) { v.photos = sv.photos; changed = true; }
       }
     }
   });
