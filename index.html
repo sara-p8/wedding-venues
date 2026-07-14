@@ -1275,10 +1275,9 @@ OTHER NOTES
   website: 'https://dillinghamranch.com',
   dateInquired: '2026-07-11',
   docs: [
-    { label: 'View response email (Nicole Kahale)', url: 'https://mail.google.com/mail/u/2/#inbox/KtbxLthRWgBKqZGrrgcLdRkfTfwmKNTbBB', type: 'link' },
-    { label: 'Dillingham Ranch Website', url: 'https://dillinghamranch.com', type: 'link' },
+    { name: 'View response email (Nicole Kahale)', url: 'https://mail.google.com/mail/u/2/#inbox/KtbxLthRWgBKqZGrrgcLdRkfTfwmKNTbBB' },
+    { name: 'Dillingham Ranch Website', url: 'https://dillinghamranch.com' },
   ],
-  photos: [],
   pros: [
     'Historic 1897 estate — unique story & setting',
     '30 acres of private landscaped lawn',
@@ -1352,11 +1351,10 @@ Mon–Fri, 9am–3pm (by appointment, no holidays)`,
   website: 'https://theplantplace.co',
   dateInquired: '2026-07-11',
   docs: [
-    { label: 'View response email (The Plant Place)', url: 'https://mail.google.com/mail/u/2/#inbox/QgrcJHrtxBMwStlpSVFwjdrxbtPkZjmpkxg', type: 'link' },
-    { label: 'The Plant Place Website', url: 'https://theplantplace.co', type: 'link' },
-    { label: '📸 Instagram (@theplantplace808)', url: 'https://www.instagram.com/theplantplace808', type: 'link' },
+    { name: 'View response email (The Plant Place)', url: 'https://mail.google.com/mail/u/2/#inbox/QgrcJHrtxBMwStlpSVFwjdrxbtPkZjmpkxg' },
+    { name: 'The Plant Place Website', url: 'https://theplantplace.co' },
+    { name: '📸 Instagram (@theplantplace808)', url: 'https://www.instagram.com/theplantplace808' },
   ],
-  photos: [],
   pros: [
     'Very affordable base price ($3,500 for 100 guests)',
     'Includes lawn, pavilion, kitchen, tables & chairs',
@@ -1575,7 +1573,7 @@ function renderHomeGrid() {
   const grid = document.getElementById('home-grid');
   grid.innerHTML = active.map(v => {
     const photoUrl = firstPhotoUrl(v);
-    const price = v.pricing ? fmt(venueTotal(v.pricing, v.pricing.guests || 100)) : null;
+    const price = v.pricing ? fmt(getPricingTotal(v)) : null;
     const take = v.ourTake ? `<div class="home-card-take">${esc(v.ourTake)}</div>` : '';
     return `<div class="home-card" onclick="onVenueClick('${esc(v.id)}')">
       <div class="home-card-photo">${photoUrl ? `<img src="${esc(photoUrl)}" alt="" loading="lazy">` : '🏛'}</div>
@@ -1602,7 +1600,7 @@ function firstPhotoUrl(v) {
 function renderSummaryTab() {
   const v = getV(); if (!v) return;
   const photo = firstPhotoUrl(v);
-  const price = v.pricing ? fmt(venueTotal(v.pricing, v.pricing.guests || 100)) : null;
+  const price = v.pricing ? fmt(getPricingTotal(v)) : null;
   let html = '';
   if (photo) html += `<img class="summary-hero" src="${esc(photo)}" alt="Photo of ${esc(v.name||'')}">`;
   html += `<div class="summary-stats">
@@ -1621,7 +1619,7 @@ function renderSummaryTab() {
     html += `</div>`;
   }
   if (v.docs&&v.docs.length) {
-    html += `<div><div class="summary-section-label" style="margin-bottom:10px">Documents</div><div class="summary-docs">${v.docs.map(d=>`<a class="summary-doc-link" href="${esc(d.url)}" target="_blank" rel="noopener">${d.type==='pdf'?'📄':'🔗'} ${esc(d.label)}</a>`).join('')}</div></div>`;
+    html += `<div><div class="summary-section-label" style="margin-bottom:10px">Documents</div><div class="summary-docs">${v.docs.map(d=>{const nm=d.name||d.label||d.url||'';const icon=nm.toLowerCase().endsWith('.pdf')?'📄':(d.url&&d.url.includes('mail.google.com'))?'📧':'🔗';return `<a class="summary-doc-link" href="${esc(d.url)}" target="_blank" rel="noopener">${icon} ${esc(nm)}</a>`;}).join('')}</div></div>`;
   }
   document.getElementById('tab-summary').innerHTML = html;
 }
@@ -1742,12 +1740,13 @@ function renderDocs() {
     return;
   }
   list.innerHTML = docs.map((d, i) => {
-    const isPdf = d.name.toLowerCase().endsWith('.pdf');
+    const nm = d.name || d.label || d.url || '';
+    const isPdf = nm.toLowerCase().endsWith('.pdf');
     const isGmail = d.url && d.url.includes('mail.google.com');
     const icon = isPdf ? '📄' : isGmail ? '📧' : '🔗';
     return `<div class="doc-item">
       <span class="doc-icon">${icon}</span>
-      <a class="doc-link" href="${esc(d.url)}" target="_blank" rel="noopener" title="${esc(d.url)}">${esc(d.name)}</a>
+      <a class="doc-link" href="${esc(d.url)}" target="_blank" rel="noopener" title="${esc(d.url)}">${esc(nm)}</a>
       <button class="doc-del" onclick="removeDoc(${i})" title="Remove">×</button>
     </div>`;
   }).join('');
