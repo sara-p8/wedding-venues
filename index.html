@@ -1574,11 +1574,11 @@ function renderHomeGrid() {
   sub.textContent = active.length === 1 ? '1 venue being considered' : `${active.length} venues being considered`;
   const grid = document.getElementById('home-grid');
   grid.innerHTML = active.map(v => {
-    const photo = v.photos && v.photos.find(p => p.url);
+    const photoUrl = firstPhotoUrl(v);
     const price = v.pricing ? fmt(venueTotal(v.pricing, v.pricing.guests || 100)) : null;
     const take = v.ourTake ? `<div class="home-card-take">${esc(v.ourTake)}</div>` : '';
     return `<div class="home-card" onclick="onVenueClick('${esc(v.id)}')">
-      <div class="home-card-photo">${photo ? `<img src="${esc(photo.url)}" alt="" loading="lazy">` : '🏛'}</div>
+      <div class="home-card-photo">${photoUrl ? `<img src="${esc(photoUrl)}" alt="" loading="lazy">` : '🏛'}</div>
       <div class="home-card-body">
         <div class="home-card-name">${esc(v.name||'Unnamed Venue')}</div>
         <div class="home-card-loc">${esc(v.location||'')}</div>
@@ -1592,12 +1592,19 @@ function renderHomeGrid() {
   }).join('');
 }
 
+function firstPhotoUrl(v) {
+  if (!v.photos) return null;
+  if (Array.isArray(v.photos)) { const p = v.photos.find(x => x.url); return p ? p.url : null; }
+  if (v.photos.images && v.photos.images.length) return v.photos.images[0];
+  return null;
+}
+
 function renderSummaryTab() {
   const v = getV(); if (!v) return;
-  const photo = v.photos && v.photos.find(p => p.url);
+  const photo = firstPhotoUrl(v);
   const price = v.pricing ? fmt(venueTotal(v.pricing, v.pricing.guests || 100)) : null;
   let html = '';
-  if (photo) html += `<img class="summary-hero" src="${esc(photo.url)}" alt="Photo of ${esc(v.name||'')}">`;
+  if (photo) html += `<img class="summary-hero" src="${esc(photo)}" alt="Photo of ${esc(v.name||'')}">`;
   html += `<div class="summary-stats">
     <div class="summary-stat"><div class="summary-stat-label">Est. price</div><div class="summary-stat-value">${price||'—'}</div></div>
     <div class="summary-stat"><div class="summary-stat-label">Capacity</div><div class="summary-stat-value">${v.capacity ? 'Up to '+v.capacity : '—'}</div></div>
